@@ -87,25 +87,25 @@ def main(args):
         
         print(f'Epoch {epoch+1}/{args.num_epochs}, Train Loss: {train_loss:.4f}, Train IoU: {train_iou:.4f}, Validation Loss: {val_loss:.4f}, Validation IoU: {val_iou:.4f}')
 
-        # Testing phase
-        model.eval()
-        predicted_masks = []  # List to store predicted masks  
-        with torch.no_grad():
-            for images, _ in test_loader:  # Ignore the masks in the test loader
-                images = images.to(device)
-                
-                # Forward pass
-                outputs = model(images)
-                
-                # Convert predicted masks to numpy arrays
-                predicted_masks.extend(outputs.cpu().numpy())
-        
-        # Save predicted masks to a CSV file
-        predicted_masks = np.array(predicted_masks)
-        df = pd.DataFrame(predicted_masks)
-        df.to_csv("predicted_masks.csv", index=False)
-        
-        print("Predicted masks saved to predicted_masks.csv")
+    # Testing phase
+    model.eval()
+    predicted_masks = []  # List to store predicted masks  
+    with torch.no_grad():
+        for images, _ in test_loader:  # Ignore the masks in the test loader
+            images = images.to(device)
+            
+            # Forward pass
+            outputs = model(images)
+            
+            # Convert predicted masks to numpy arrays
+            predicted_masks.extend(outputs.cpu().numpy())
+    
+    # Save predicted masks to a CSV file
+    predicted_masks = np.array(predicted_masks)
+    df = pd.DataFrame(predicted_masks)
+    df.to_csv("predicted_masks.csv", index=False)
+    
+    print("Predicted masks saved to predicted_masks.csv")
 
 if __name__ == "__main__":
     
