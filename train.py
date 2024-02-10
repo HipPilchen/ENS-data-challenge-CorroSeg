@@ -92,7 +92,7 @@ def main(args):
     predicted_masks = []  # List to store predicted masks  
     with torch.no_grad():
         for images, _ in test_loader:  # Ignore the masks in the test loader
-            images = images.to(device)
+            images = images.repeat(1, 3, 1, 1)  # Repeat the images 3 times to match the input channels of the model
             
             # Forward pass
             outputs = model(images)
