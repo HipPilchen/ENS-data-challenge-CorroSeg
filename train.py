@@ -124,7 +124,7 @@ if __name__ == "__main__":
         help="ID of a previous run to be resumed"
     )
     parser.add_argument(
-        "--wandb_entity", type=str, default=None,
+        "--wandb_entity", type=str, default='lucasgascon',
         help="wandb username or team name to which runs are attributed"
     )
     parser.add_argument('-n', '--num-epochs', default=5, type=int,
