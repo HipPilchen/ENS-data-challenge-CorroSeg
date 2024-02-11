@@ -2,3 +2,4 @@ data/
 legacy/
 wandb/
 test.ipynb
+__pycache__/
