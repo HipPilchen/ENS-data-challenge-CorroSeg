@@ -169,8 +169,6 @@ class CorroSegDataset(Dataset):
 
         return image_tensor, mask_tensor, torch.Tensor([well])    
             
-            
-            
         # if not self.test:
         #     img_name = self.masks['Unnamed: 0'].iloc[idx]
         #     img_path = os.path.join(self.processed_dir,'images_train',img_name+'.npy')

@@ -15,6 +15,8 @@ from datetime import datetime
 
 def main(args):
     if(args.wandb):
+        if args.experiment_name is None:
+            args.experiment_name = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
         wandb.init(
             name=args.experiment_name,
             id=args.wandb_id,
@@ -161,4 +163,4 @@ if __name__ == "__main__":
     args = parser.parse_args()
     main(args)
     
-# python3 train.py --wandb --wandb_entity lucasgascon --num-epochs 5
+# python3 train.py --wandb --wandb_entity lucasgascon --batch-size 64 --num-epochs 100
