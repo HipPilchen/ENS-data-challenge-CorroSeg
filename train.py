@@ -26,7 +26,7 @@ def main(args):
             "learning_rate":args.learning_rate,
         }
         
-    device ='cpu'
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     model = get_model(args.model_name).to(device)
     
     corro_seg = CorroSeg('data', 'y_train.csv', shuffle = True,
@@ -55,7 +55,6 @@ def main(args):
             image = image.to(device)  # Move image to device
             mask = mask.to(device)  # Move mask to device
             outputs = model(image.repeat(1, 3, 1, 1))
-            outputs = outputs.detach()  # Detach outputs from the computation graph
             loss = criterion(outputs, mask)
             loss.backward()
             optimizer.step()
@@ -102,7 +101,7 @@ def main(args):
             
             # Forward pass
             image = image.to(device)  # Move image to device
-            output = model(image.repeat(1, 3, 1, 1))
+            output = model(image.repeat(1, 3, 1, 1)).detach()
             pred = output > args.threshold  # Apply threshold to get binary predictions
             pred = pred.cpu().numpy()
             
@@ -123,20 +122,20 @@ if __name__ == "__main__":
     
     parser = argparse.ArgumentParser()  
     parser.add_argument(
-        "--wandb", action="store_true", default=True,
+        "--wandb", action="store_true", default=False,
         help="Whether to log metrics to Weights & Biases"
     )
     parser.add_argument(
-        "--experiment_name", type=str, default=None,
+        "--experiment_name", type=str, default="test2",
         help="Name of the current experiment. Used for wandb logging"
     )
-    parser.add_argument('-output_dir', default='wandb', type=int)
+    parser.add_argument('-output_dir', default='wandb', type=str)
     parser.add_argument(
         "--wandb_id", type=str, default=None,
         help="ID of a previous run to be resumed"
     )
     parser.add_argument(
-        "--wandb_entity", type=str, default='lucasgascon',
+        "--wandb_entity", type=str, default=None,
         help="wandb username or team name to which runs are attributed"
     )
     parser.add_argument('-n', '--num-epochs', default=5, type=int,
@@ -157,4 +156,4 @@ if __name__ == "__main__":
     args = parser.parse_args()
     main(args)
     
-# python3 train.py --experiment_name "ResNet18" --output_dir "wandb" --num_epochs 500 --batch_size 1 --valid_ratio 0.1 --model_name "resnet18" --learning_rate 2e-5 --threshold 0.5 --unfreeze_at_epoch 3 --layers_to_unfreeze_each_time 1 --weight_decay 0.01
+# python3 train.py --wandb --wandb_entity lucasgascon --num-epochs 5
