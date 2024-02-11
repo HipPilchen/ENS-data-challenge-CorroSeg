@@ -156,6 +156,11 @@ class CorroSegDataset(Dataset):
 
             mask_tensor = torch.Tensor(mask) if self.transform_mask is None else self.transform_mask(torch.Tensor(mask))
         else:
+            file_names = os.listdir(os.path.join(self.processed_dir,'images_test'))
+            img_path = os.path.join(self.processed_dir,'images_test', file_names[idx])
+            well = int(file_names[idx][5:7].replace('_', ''))
+            image = torch.load(img_path).numpy()
+            
             # Return a dummy mask for test data
             dummy_mask = torch.zeros(1296)  # Adjust the size according to your needs
             mask_tensor = dummy_mask

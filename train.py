@@ -10,6 +10,8 @@ from model import get_model
 from dataloader import CorroSeg
 import numpy as np 
 import os
+import datetime
+from datetime import datetime
 
 def main(args):
     if(args.wandb):
@@ -54,6 +56,7 @@ def main(args):
             optimizer.zero_grad()
             image = image.to(device)  # Move image to device
             mask = mask.to(device)  # Move mask to device
+            image = image.unsqueeze(1)
             outputs = model(image.repeat(1, 3, 1, 1))
             loss = criterion(outputs, mask)
             loss.backward()
@@ -76,6 +79,7 @@ def main(args):
                 mask = mask.view(-1, 1, 36, 36)
                 image = image.to(device)  # Move image to device
                 mask = mask.to(device)  # Move mask to device
+                image = image.unsqueeze(1)
                 outputs = model(image.repeat(1, 3, 1, 1))
                 outputs = outputs.detach()  # Detach outputs from the computation graph
                 loss = criterion(outputs, mask)
@@ -97,10 +101,11 @@ def main(args):
     model.eval()
     predicted_masks = []  # List to store predicted masks  
     with torch.no_grad():
-        for image, _ in test_loader:  # Ignore the masks in the test loader
+        for image, _, _ in test_loader:  # Ignore the masks in the test loader
             
             # Forward pass
             image = image.to(device)  # Move image to device
+            image = image.unsqueeze(1)
             output = model(image.repeat(1, 3, 1, 1)).detach()
             pred = output > args.threshold  # Apply threshold to get binary predictions
             pred = pred.cpu().numpy()
@@ -126,7 +131,7 @@ if __name__ == "__main__":
         help="Whether to log metrics to Weights & Biases"
     )
     parser.add_argument(
-        "--experiment_name", type=str, default="test2",
+        "--experiment_name", type=str, default=None,
         help="Name of the current experiment. Used for wandb logging"
     )
     parser.add_argument('-output_dir', default='wandb', type=str)
@@ -140,7 +145,7 @@ if __name__ == "__main__":
     )
     parser.add_argument('-n', '--num-epochs', default=5, type=int,
                         help="number of epochs to run") 
-    parser.add_argument('-bs','--batch-size', default=1, type=int)
+    parser.add_argument('-bs','--batch-size', default=64, type=int)
     parser.add_argument('--valid-ratio', default=0.1, type=int)
     parser.add_argument('--model-name', default='resnet18', type=str)
     parser.add_argument('-lr', '--learning-rate', default=2e-5, type=float,
