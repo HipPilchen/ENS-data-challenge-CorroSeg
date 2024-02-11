@@ -16,6 +16,7 @@ def main(args):
         wandb.init(
             name=args.experiment_name,
             id=args.wandb_id,
+            entity=args.wandb_entity,
             project="corroseg",
         )
         
@@ -51,7 +52,10 @@ def main(args):
         for image, mask, well in tqdm(train_loader):
             mask = mask.view(-1, 1, 36, 36)
             optimizer.zero_grad()
+            image = image.to(device)  # Move image to device
+            mask = mask.to(device)  # Move mask to device
             outputs = model(image.repeat(1, 3, 1, 1))
+            outputs = outputs.detach()  # Detach outputs from the computation graph
             loss = criterion(outputs, mask)
             loss.backward()
             optimizer.step()
@@ -71,10 +75,13 @@ def main(args):
         with torch.no_grad():
             for image, mask, well in tqdm(val_loader):
                 mask = mask.view(-1, 1, 36, 36)
+                image = image.to(device)  # Move image to device
+                mask = mask.to(device)  # Move mask to device
                 outputs = model(image.repeat(1, 3, 1, 1))
+                outputs = outputs.detach()  # Detach outputs from the computation graph
                 loss = criterion(outputs, mask)
                 val_loss += loss.item() * image.size(0)
-                preds = outputs > 0.5  # Apply threshold to get binary predictions
+                preds = outputs > args.threshold  # Apply threshold to get binary predictions
                 val_iou += iou_score(preds, mask).item() * image.size(0)
         
         val_loss /= len(val_loader.dataset)
@@ -86,19 +93,24 @@ def main(args):
                     'Validation Loss': val_loss, 'Validation IoU': val_iou}, step=epoch)
         
         print(f'Epoch {epoch+1}/{args.num_epochs}, Train Loss: {train_loss:.4f}, Train IoU: {train_iou:.4f}, Validation Loss: {val_loss:.4f}, Validation IoU: {val_iou:.4f}')
-
+        
     # Testing phase
     model.eval()
     predicted_masks = []  # List to store predicted masks  
     with torch.no_grad():
-        for images, _ in test_loader:  # Ignore the masks in the test loader
-            images = images.repeat(1, 3, 1, 1)  # Repeat the images 3 times to match the input channels of the model
+        for image, _ in test_loader:  # Ignore the masks in the test loader
             
             # Forward pass
-            outputs = model(images)
+            image = image.to(device)  # Move image to device
+            output = model(image.repeat(1, 3, 1, 1))
+            pred = output > args.threshold  # Apply threshold to get binary predictions
+            pred = pred.cpu().numpy()
+            
+            # Flatten each 36x36 mask into a 1D array
+            flattened_mask = pred.reshape(pred.shape[0], -1)
             
             # Convert predicted masks to numpy arrays
-            predicted_masks.extend(outputs.cpu().numpy())
+            predicted_masks.extend(flattened_mask)
     
     # Save predicted masks to a CSV file
     predicted_masks = np.array(predicted_masks)
