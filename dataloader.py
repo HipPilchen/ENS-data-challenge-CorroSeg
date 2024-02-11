@@ -154,25 +154,45 @@ class CorroSegDataset(Dataset):
             
             mask = self.masks.drop(('Unnamed: 0'), axis = 1).iloc[idx].values
 
+            mask_tensor = torch.Tensor(mask) if self.transform_mask is None else self.transform_mask(torch.Tensor(mask))
         else:
-            file_names = os.listdir(os.path.join(self.processed_dir,'images_test'))
-            img_path = os.path.join(self.processed_dir,'images_test', file_names[idx])
-            well = int(file_names[idx][5:7].replace('_', ''))
-            image = torch.load(img_path).numpy()
+            # Return a dummy mask for test data
+            dummy_mask = torch.zeros(1296)  # Adjust the size according to your needs
+            mask_tensor = dummy_mask
 
+        image_tensor = torch.Tensor(image) if self.transform_img is None else self.transform_img(torch.Tensor(image))
 
-        if self.transform_img:
-            image = self.transform_img(torch.Tensor(image))
-            
-        if self.transform_mask:
-            mask = self.transform_mask(torch.Tensor(mask))
+        return image_tensor, mask_tensor, torch.Tensor([well])    
             
             
-        if self.test:
-            return torch.Tensor(image) , torch.Tensor(well)
-        else:
+            
+        # if not self.test:
+        #     img_name = self.masks['Unnamed: 0'].iloc[idx]
+        #     img_path = os.path.join(self.processed_dir,'images_train',img_name+'.npy')
+        #     image = torch.load(img_path).numpy()
+        #     well = int(img_name[5:7].replace('_', ''))
+            
+        #     mask = self.masks.drop(('Unnamed: 0'), axis = 1).iloc[idx].values
 
-            return torch.Tensor(image), torch.Tensor(mask), torch.Tensor(well)
+        # else:
+        #     file_names = os.listdir(os.path.join(self.processed_dir,'images_test'))
+        #     img_path = os.path.join(self.processed_dir,'images_test', file_names[idx])
+        #     well = int(file_names[idx][5:7].replace('_', ''))
+        #     image = torch.load(img_path).numpy()
+
+
+        # if self.transform_img:
+        #     image = self.transform_img(torch.Tensor(image))
+            
+        # if self.transform_mask:
+        #     mask = self.transform_mask(torch.Tensor(mask))
+            
+            
+        # if self.test:
+        #     return torch.Tensor(image) , torch.Tensor(well)
+        # else:
+
+        #     return torch.Tensor(image), torch.Tensor(mask), torch.Tensor(well)
 
     
 
