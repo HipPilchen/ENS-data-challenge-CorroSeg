@@ -121,7 +121,8 @@ def main(args):
     # Save predicted masks to a CSV file
     predicted_masks = np.array(predicted_masks)
     df = pd.DataFrame(predicted_masks)
-    df.to_csv("predicted_masks.csv", index=False)
+    prediction_path = "data/predictions" + args.experiment_name
+    df.to_csv(prediction_path, index=False)
     
     print("Predicted masks saved to predicted_masks.csv")
 
