@@ -7,16 +7,16 @@ import pandas as pd
 import wandb
 from tqdm import tqdm
 from model import get_model
-from dataloader import CorroSeg
+from dataloader import CorroSeg, CorroSegDataset
 import numpy as np 
 import os
 import datetime
 from datetime import datetime
 
 def main(args):
-    if(args.wandb):
-        if args.experiment_name is None:
+    if args.experiment_name is None:
             args.experiment_name = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+    if(args.wandb):
         wandb.init(
             name=args.experiment_name,
             id=args.wandb_id,
@@ -31,7 +31,7 @@ def main(args):
         }
         
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-    model = get_model(args.model_name).to(device)
+    model = get_model(args.model_name, args.backbone).to(device)
     
     corro_seg = CorroSeg('data', 'y_train.csv', shuffle = True,
                  batch_size = args.batch_size, valid_ratio = args.valid_ratio, transform_img=None, transform_mask=None, 
@@ -39,12 +39,20 @@ def main(args):
     train_loader, val_loader, test_loader = corro_seg.get_loaders()
 
     # Loss function and optimizer definition
-    criterion = nn.BCELoss()  # Binary cross-entropy loss
+    total_pixel = 10882512
+    pixel_0 = 10099900
+    pixel_1 = 782612
+    freq_0 = pixel_0 / total_pixel
+    freq_1 = pixel_1 / total_pixel
+    weight_for_0 = 1 / freq_0
+    weight_for_1 = 1 / freq_1
+    pos_weight = torch.tensor([weight_for_1 / weight_for_0]).to(device)
+    criterion = nn.BCEWithLogitsLoss(pos_weight=pos_weight)
     optimizer = torch.optim.Adam(model.parameters(), lr=args.learning_rate, weight_decay=args.weight_decay)
 
     for epoch in tqdm(range(args.num_epochs)):
         # Defreezing strategy
-        if epoch % args.unfreeze_at_epoch == 0:
+        if args.defreezing_strategy and (epoch % args.unfreeze_at_epoch == 0):
             layers_to_unfreeze = (epoch // args.unfreeze_at_epoch) * args.layers_to_unfreeze_each_time
             model.unfreeze_layers(layers_to_unfreeze)
         
@@ -60,12 +68,14 @@ def main(args):
             mask = mask.to(device)  # Move mask to device
             image = image.unsqueeze(1)
             outputs = model(image.repeat(1, 3, 1, 1))
+            # outputs = model(image)
             loss = criterion(outputs, mask)
             loss.backward()
             optimizer.step()
             
             train_loss += loss.item() * image.size(0)
             preds = outputs > args.threshold  # Apply threshold to get binary predictions
+            preds = preds.int()
             train_iou += iou_score(preds, mask).item() * image.size(0)
         
         train_loss /= len(train_loader.dataset)
@@ -83,10 +93,12 @@ def main(args):
                 mask = mask.to(device)  # Move mask to device
                 image = image.unsqueeze(1)
                 outputs = model(image.repeat(1, 3, 1, 1))
+                # outputs = model(image)
                 outputs = outputs.detach()  # Detach outputs from the computation graph
                 loss = criterion(outputs, mask)
                 val_loss += loss.item() * image.size(0)
                 preds = outputs > args.threshold  # Apply threshold to get binary predictions
+                preds = preds.int()
                 val_iou += iou_score(preds, mask).item() * image.size(0)
         
         val_loss /= len(val_loader.dataset)
@@ -109,11 +121,13 @@ def main(args):
             image = image.to(device)  # Move image to device
             image = image.unsqueeze(1)
             output = model(image.repeat(1, 3, 1, 1)).detach()
-            pred = output > args.threshold  # Apply threshold to get binary predictions
-            pred = pred.cpu().numpy()
+            # output = model(image).detach()
+            preds = output > args.threshold # Apply threshold to get binary predictions
+            preds = preds.int()
+            preds = preds.cpu().numpy()
             
             # Flatten each 36x36 mask into a 1D array
-            flattened_mask = pred.reshape(pred.shape[0], -1)
+            flattened_mask = preds.reshape(preds.shape[0], -1)
             
             # Convert predicted masks to numpy arrays
             predicted_masks.extend(flattened_mask)
@@ -121,8 +135,13 @@ def main(args):
     # Save predicted masks to a CSV file
     predicted_masks = np.array(predicted_masks)
     df = pd.DataFrame(predicted_masks)
-    prediction_path = "data/predictions/submission_" + args.experiment_name
-    df.to_csv(prediction_path, index=False)
+    
+    files = [f[:-4] for f in os.listdir('data/raw/images_test') if os.path.isfile(os.path.join('data/raw/images_test', f))]
+    sorted_files = sorted(files)
+    df.index = sorted_files
+    
+    prediction_path = "data/predictions/submission_" + args.experiment_name + '.csv'
+    df.to_csv(prediction_path, index=True)
     
     print("Predicted masks saved to predicted_masks.csv")
 
@@ -150,18 +169,20 @@ if __name__ == "__main__":
                         help="number of epochs to run") 
     parser.add_argument('-bs','--batch-size', default=64, type=int)
     parser.add_argument('--valid-ratio', default=0.1, type=int)
-    parser.add_argument('--model-name', default='resnet18', type=str)
+    parser.add_argument('--model-name', default='binary_segmentation', type=str)
+    parser.add_argument('--backbone', default='efficientnet-v2-m', type=str)
     parser.add_argument('-lr', '--learning-rate', default=2e-5, type=float,
                         help="learning rate for Adam optimizer")
     parser.add_argument('-eps', '--threshold', default=0.5, type=float,
                         help="Threshold for binary classification")
-    parser.add_argument('-unfreeze_at_epoch', default=3, type=int, 
+    parser.add_argument('--defreezing-strategy', action="store_true", default=False)
+    parser.add_argument('-unfreeze_at_epoch', default=0, type=int, 
                         help="Epoch to start unfreezing")
-    parser.add_argument('-layers_to_unfreeze_each_time', default=1, type=int,
+    parser.add_argument('-layers_to_unfreeze_each_time', default=100, type=int,
                         help="Number of layers to unfreeze")
     parser.add_argument('-wd','--weight-decay',type=float, default = 0.01, help = 'Weight decay')
 
     args = parser.parse_args()
     main(args)
     
-# python3 train.py --wandb --wandb_entity lucasgascon --batch-size 64 --num-epochs 100
+# python3 train.py --wandb --wandb_entity lucasgascon --batch-size 64 --num-epochs 100 --backbone --experiment_name

@@ -33,9 +33,6 @@ class CorroSegDataset(Dataset):
         else:
             self.masks = pd.read_csv(os.path.join(self.data_dir,'processed','y_train.csv'))
      
-             
-                
-
     @property
     def raw_dir(self) -> str:
         return os.path.join(self.data_dir, 'raw/')
@@ -90,8 +87,6 @@ class CorroSegDataset(Dataset):
         os.mkdir(os.path.join(self.processed_dir,'images_test'))
         for img_name, new_img in zip(test_img_names, new_test_imgs):
             torch.save(torch.Tensor(new_img.reshape(36,36)),os.path.join(self.processed_dir,'images_test/')+img_name)
-
-
 
     
     def process_csv(self, taken_img_names):

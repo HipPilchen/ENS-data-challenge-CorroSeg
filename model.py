@@ -1,58 +1,116 @@
 import torch
-import torchvision.models as models
 import torch.nn as nn
-import torch.nn.functional as F
+import torchvision.models as models
 
-class BinarySegmentationModel(nn.Module):
-    def __init__(self, backbone_pretrained=True):
-        super(BinarySegmentationModel, self).__init__()
-        # Use ResNet as an example backbone
-        self.backbone = models.resnet18(pretrained=backbone_pretrained)
-        
-        # Omit the last classification layer
-        self.backbone = nn.Sequential(*(list(self.backbone.children())[:-2]))
-        
-        # Add segmentation-specific layers
-        self.conv1 = nn.Conv2d(512, 256, kernel_size=3, padding=1)  # Adjust the number of channels based on the backbone's output
-        self.conv2 = nn.Conv2d(256, 128, kernel_size=3, padding=1)
-        self.conv3 = nn.Conv2d(128, 64, kernel_size=3, padding=1)
-        self.conv4 = nn.Conv2d(64, 1, kernel_size=1)  # 1-channel output for binary segmentation
-        
-        # Upsampling layer to match the input image resolution
-        self.upsample = nn.Upsample(scale_factor=(18, 18), mode='bilinear', align_corners=False)
+class ResNetBackbone(nn.Module):
+    def __init__(self, backbone):
+        super(ResNetBackbone, self).__init__()
+        self.features = nn.Sequential(*list(backbone.children())[:-2])
+        self.adaptive_pool = nn.AdaptiveAvgPool2d((1, 1))
 
     def forward(self, x):
-        # Feature extraction through the backbone
-        x = self.backbone(x)
-        
-        # Applying segmentation layers
-        x = F.relu(self.conv1(x))
-        x = F.relu(self.conv2(x))
-        x = F.relu(self.conv3(x))
-        x = torch.sigmoid(self.conv4(x))  # Use sigmoid for binary classification
-        
-        # Upsampling to get the segmentation map of the same size as the input image
-        x = self.upsample(x)
+        x = self.features(x)
+        # x = self.adaptive_pool(x)
         return x
+
+class EfficientNetBackbone(nn.Module):
+    def __init__(self, backbone, fpn=False, selected_layers=None):
+        super(EfficientNetBackbone, self).__init__()
+        self.features = backbone.features
+        self.selected_layers = selected_layers if selected_layers else [2, 4, 6, 8]
+
+    def forward(self, x):
+        # features = []
+        # for i, layer in enumerate(self.features):
+        #     x = layer(x)
+        #     if i in self.selected_layers:
+        #         features.append(x)
+        features = self.features(x)
+        return features
     
+class FPN(nn.Module):
+    def __init__(self, in_channels_list, out_channels):
+        super(FPN, self).__init__()
+        self.inner_blocks = nn.ModuleList()
+        self.layer_blocks = nn.ModuleList()
+
+        for in_channels in in_channels_list:
+            self.inner_blocks.append(nn.Conv2d(in_channels, out_channels, 1))
+            self.layer_blocks.append(nn.Conv2d(out_channels, out_channels, 3, padding=1))
+
+        self.upsample = nn.Upsample(scale_factor=2, mode='nearest')
+
+    def forward(self, x):
+        last_inner = self.inner_blocks[-1](x[-1])
+        results = []
+        results.append(self.layer_blocks[-1](last_inner))
+
+        for feature, inner_block, layer_block in zip(x[:-1][::-1], self.inner_blocks[:-1][::-1], self.layer_blocks[:-1][::-1]):
+            if not last_inner.size() == feature.size():
+                last_inner = self.upsample(last_inner)
+            inner_lateral = inner_block(feature)
+            last_inner = inner_lateral + last_inner
+            results.insert(0, layer_block(last_inner))
+
+        return results
+
+class BinarySegmentationModel(nn.Module):
+    def __init__(self, fpn=False, backbone_name='resnet50', backbone_pretrained=True):
+        super(BinarySegmentationModel, self).__init__()
+        backbone_factory = {
+            'resnet18': lambda: models.resnet18(pretrained=backbone_pretrained),
+            'resnet34': lambda: models.resnet34(pretrained=backbone_pretrained),
+            'resnet50': lambda: models.resnet50(pretrained=backbone_pretrained),
+            'resnet101': lambda: models.resnet101(pretrained=backbone_pretrained),
+            'efficientnet-b0': lambda: models.efficientnet_b0(pretrained=backbone_pretrained),
+            'efficientnet-v2-s': lambda: models.efficientnet_v2_s(pretrained=backbone_pretrained),
+            'efficientnet-v2-m': lambda: models.efficientnet_v2_m(pretrained=backbone_pretrained),
+            'efficientnet-v2-l': lambda: models.efficientnet_v2_l(pretrained=backbone_pretrained),
+        }
+
+        if backbone_name in backbone_factory:
+            backbone = backbone_factory[backbone_name]()
+            if 'resnet' in backbone_name:
+                self.backbone = ResNetBackbone(backbone)
+            elif 'efficientnet' in backbone_name:
+                self.backbone = EfficientNetBackbone(backbone, fpn=fpn)   
+            else:
+                raise ValueError("Unsupported backbone")
+            # Dynamically determine the output channels
+            dummy_input = torch.rand(1, 3, 36, 36)  # Assuming a typical input size for ResNet
+            output_features = self.backbone(dummy_input)
+            if isinstance(output_features, torch.Tensor):
+                output_channels = output_features.size(1)
+            else:  # List of tensors, adjust according to your segmentation head design
+                output_channels = sum([feature.size(1) for feature in output_features])
+        else:
+            raise ValueError(f"Backbone '{backbone_name}' not supported")
+ 
+        self.segmentation_head = nn.Sequential(
+            nn.Conv2d(output_channels, 256, kernel_size=3, padding=1),
+            nn.ReLU(inplace=True),
+            nn.Conv2d(256, 128, kernel_size=3, padding=1),
+            nn.ReLU(inplace=True),
+            nn.Conv2d(128, 64, kernel_size=3, padding=1),
+            nn.ReLU(inplace=True),
+            nn.Conv2d(64, 1, kernel_size=1),
+        )
+        # self.upsample = nn.ConvTranspose2d(1, 1, kernel_size=18, stride=4, padding=4)
+        self.upsample = nn.Upsample(scale_factor=(18, 18), mode='bilinear', align_corners=False)
+
+
+    def forward(self, x):
+        features = self.backbone(x)
+        x = self.segmentation_head(features)
+        x = torch.sigmoid(self.upsample(x))
+        return x
+
     def unfreeze_layers(self, num_layers):
-        # Get total number of layers in the backbone
-        total_layers = len(list(self.backbone.children()))
-        
-        # Ensure num_layers does not exceed total number of layers
-        num_layers = min(num_layers, total_layers)
-        
-        # Freeze all layers first
-        for param in self.backbone.parameters():
-            param.requires_grad = False
-        
-        # Unfreeze the last `num_layers` layers
         for child in list(self.backbone.children())[-num_layers:]:
             for param in child.parameters():
                 param.requires_grad = True
                 
-                
-def get_model(model_name, backbone_pretrained=True):
-    if model_name == 'resnet18':
-        model = BinarySegmentationModel(backbone_pretrained=backbone_pretrained)
+def get_model(model_name, backbone_name, backbone_pretrained=True):
+    if model_name == 'binary_segmentation':
+        model = BinarySegmentationModel(backbone_name=backbone_name, backbone_pretrained=backbone_pretrained)
     return model
