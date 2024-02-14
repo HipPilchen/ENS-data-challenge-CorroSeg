@@ -87,6 +87,19 @@ def get_backbone(backbone_name, fpn=False, pretrained=True):
     
     return backbone, output_channels
 
+class UpscaleNet(nn.Module):
+    def __init__(self):
+        super(UpscaleNet, self).__init__()
+        self.up1 = nn.ConvTranspose2d(in_channels=1, out_channels=1, kernel_size=7, stride=3, padding=1)
+        self.up2 = nn.ConvTranspose2d(in_channels=1, out_channels=1, kernel_size=7, stride=2, padding=2, output_padding=1)
+        self.up3 = nn.ConvTranspose2d(in_channels=1, out_channels=1, kernel_size=6, stride=2, padding=2, output_padding=0)
+        
+    def forward(self, x):
+        x = self.up1(x)
+        x = self.up2(x)
+        x = self.up3(x)
+        return x
+
 class BinarySegmentationModel(nn.Module):
     def __init__(self, fpn=False, backbone_name='resnet50', backbone_pretrained=True):
         super(BinarySegmentationModel, self).__init__()
@@ -102,8 +115,8 @@ class BinarySegmentationModel(nn.Module):
             nn.ReLU(inplace=True),
             nn.Conv2d(64, 1, kernel_size=1),
         )
-        # self.upsample = nn.ConvTranspose2d(1, 1, kernel_size=18, stride=4, padding=4)
-        self.upsample = nn.Upsample(scale_factor=(18, 18), mode='bilinear', align_corners=False)
+        self.upsample = UpscaleNet()
+        # self.upsample = nn.Upsample(scale_factor=(18, 18), mode='bilinear', align_corners=False)
 
 
     def forward(self, x):
