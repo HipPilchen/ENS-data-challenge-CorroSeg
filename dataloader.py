@@ -3,10 +3,9 @@ import pandas as pd
 import numpy as np
 import torch
 from torch.utils.data import Dataset, DataLoader
-from skimage import io, transform
 from sklearn.preprocessing import RobustScaler
 from tqdm.auto import tqdm
-from pathlib import Path
+
 
 class CorroSegDataset(Dataset):
     def __init__(self, data_dir, test = True, transform_img=None, transform_mask=None):
