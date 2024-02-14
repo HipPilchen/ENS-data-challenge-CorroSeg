@@ -31,7 +31,7 @@ def main(args):
         }
         
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-    model = get_model(args.model_name, args.backbone).to(device)
+    model = get_model(model_name=args.model_name, backbone_name=args.backbone).to(device)
     
     corro_seg = CorroSeg('data', 'y_train.csv', shuffle = True,
                  batch_size = args.batch_size, valid_ratio = args.valid_ratio, transform_img=None, transform_mask=None, 
@@ -169,7 +169,7 @@ if __name__ == "__main__":
                         help="number of epochs to run") 
     parser.add_argument('-bs','--batch-size', default=64, type=int)
     parser.add_argument('--valid-ratio', default=0.1, type=int)
-    parser.add_argument('--model-name', default='binary_segmentation', type=str)
+    parser.add_argument('--model-name', default='baseline', type=str)
     parser.add_argument('--backbone', default='efficientnet-v2-m', type=str)
     parser.add_argument('-lr', '--learning-rate', default=2e-5, type=float,
                         help="learning rate for Adam optimizer")
@@ -185,4 +185,4 @@ if __name__ == "__main__":
     args = parser.parse_args()
     main(args)
     
-# python3 train.py --wandb --wandb_entity lucasgascon --batch-size 64 --num-epochs 100 --backbone --experiment_name
+# python3 train.py --wandb --wandb_entity lucasgascon --batch-size 64 --num-epochs 100 --model-name unet --backbone --experiment_name
