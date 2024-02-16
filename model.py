@@ -29,32 +29,6 @@ class EfficientNetBackbone(nn.Module):
         features = self.features(x)
         return features
     
-class FPN(nn.Module):
-    def __init__(self, in_channels_list, out_channels):
-        super(FPN, self).__init__()
-        self.inner_blocks = nn.ModuleList()
-        self.layer_blocks = nn.ModuleList()
-
-        for in_channels in in_channels_list:
-            self.inner_blocks.append(nn.Conv2d(in_channels, out_channels, 1))
-            self.layer_blocks.append(nn.Conv2d(out_channels, out_channels, 3, padding=1))
-
-        self.upsample = nn.Upsample(scale_factor=2, mode='nearest')
-
-    def forward(self, x):
-        last_inner = self.inner_blocks[-1](x[-1])
-        results = []
-        results.append(self.layer_blocks[-1](last_inner))
-
-        for feature, inner_block, layer_block in zip(x[:-1][::-1], self.inner_blocks[:-1][::-1], self.layer_blocks[:-1][::-1]):
-            if not last_inner.size() == feature.size():
-                last_inner = self.upsample(last_inner)
-            inner_lateral = inner_block(feature)
-            last_inner = inner_lateral + last_inner
-            results.insert(0, layer_block(last_inner))
-
-        return results
-    
 def get_backbone(backbone_name, fpn=False, pretrained=True):
     backbone_factory = {
             'resnet18': lambda: models.resnet18(pretrained=pretrained),
@@ -87,19 +61,6 @@ def get_backbone(backbone_name, fpn=False, pretrained=True):
     
     return backbone, output_channels
 
-class UpscaleNet(nn.Module):
-    def __init__(self):
-        super(UpscaleNet, self).__init__()
-        self.up1 = nn.ConvTranspose2d(in_channels=1, out_channels=1, kernel_size=7, stride=3, padding=1)
-        self.up2 = nn.ConvTranspose2d(in_channels=1, out_channels=1, kernel_size=7, stride=2, padding=2, output_padding=1)
-        self.up3 = nn.ConvTranspose2d(in_channels=1, out_channels=1, kernel_size=6, stride=2, padding=2, output_padding=0)
-        
-    def forward(self, x):
-        x = self.up1(x)
-        x = self.up2(x)
-        x = self.up3(x)
-        return x
-
 class BinarySegmentationModel(nn.Module):
     def __init__(self, fpn=False, backbone_name='resnet50', backbone_pretrained=True):
         super(BinarySegmentationModel, self).__init__()
@@ -115,8 +76,7 @@ class BinarySegmentationModel(nn.Module):
             nn.ReLU(inplace=True),
             nn.Conv2d(64, 1, kernel_size=1),
         )
-        self.upsample = UpscaleNet()
-        # self.upsample = nn.Upsample(scale_factor=(18, 18), mode='bilinear', align_corners=False)
+        self.upsample = nn.Upsample(scale_factor=(18, 18), mode='bilinear', align_corners=False)
 
 
     def forward(self, x):
@@ -194,6 +154,7 @@ class UNet(nn.Module):
         out = F.interpolate(out, size=(36, 36), mode='bilinear', align_corners=False)
 
         return out
+    
                 
 def get_model(model_name, backbone_name, fpn=False, backbone_pretrained=True):
     if model_name == 'baseline':

@@ -1,4 +1,4 @@
-from utils import iou_score
+from utils import iou_score, SoftIoULoss
 # from torch.utils.tensorboard import SummaryWriter
 import torch.nn as nn
 import torch
@@ -8,6 +8,7 @@ import wandb
 from tqdm import tqdm
 from model import get_model
 from dataloader import CorroSeg, CorroSegDataset
+import torchvision.transforms as transforms
 import numpy as np 
 import os
 import datetime
@@ -33,21 +34,39 @@ def main(args):
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     model = get_model(model_name=args.model_name, backbone_name=args.backbone).to(device)
     
+    transform_img = transforms.Compose([
+        transforms.ToPILImage(),
+        transforms.RandomHorizontalFlip(),
+        # transforms.ColorJitter(brightness=0.1, contrast=0.1, saturation=0.1, hue=0.1),  # Optional: Color Jitter
+        transforms.ToTensor(),
+    ])
+
+    transform_mask = transforms.Compose([
+        transforms.ToPILImage(),
+        transforms.RandomHorizontalFlip(),  # Ensure this is the same as the image transformation
+        # Do not apply color jittering or normalization to masks
+        transforms.ToTensor(),
+        transforms.Lambda(lambda x: x[0, :, :]),  # Ensure that the mask has only one channel
+    ])
+    
     corro_seg = CorroSeg('data', 'y_train.csv', shuffle = True,
-                 batch_size = args.batch_size, valid_ratio = args.valid_ratio, transform_img=None, transform_mask=None, 
-                 transform_test=None, test_params={'batch_size': args.batch_size, 'shuffle': False})
+                 batch_size = args.batch_size, valid_ratio = args.valid_ratio, transform_img=transform_img, transform_mask=transform_mask, 
+                 transform_test=None, test_params={'batch_size': 1, 'shuffle': False})
     train_loader, val_loader, test_loader = corro_seg.get_loaders()
 
     # Loss function and optimizer definition
-    total_pixel = 10882512
-    pixel_0 = 10099900
-    pixel_1 = 782612
-    freq_0 = pixel_0 / total_pixel
-    freq_1 = pixel_1 / total_pixel
-    weight_for_0 = 1 / freq_0
-    weight_for_1 = 1 / freq_1
-    pos_weight = torch.tensor([weight_for_1 / weight_for_0]).to(device)
-    criterion = nn.BCEWithLogitsLoss(pos_weight=pos_weight)
+    
+    # total_pixel = 10882512
+    # pixel_0 = 10099900
+    # pixel_1 = 782612
+    # freq_0 = pixel_0 / total_pixel
+    # freq_1 = pixel_1 / total_pixel
+    # weight_for_0 = 1 / freq_0
+    # weight_for_1 = 1 / freq_1
+    # pos_weight = torch.tensor([weight_for_1 / weight_for_0]).to(device)
+    # criterion = nn.BCEWithLogitsLoss(pos_weight=pos_weight)
+    
+    criterion = SoftIoULoss()
     optimizer = torch.optim.Adam(model.parameters(), lr=args.learning_rate, weight_decay=args.weight_decay)
 
     for epoch in tqdm(range(args.num_epochs)):
@@ -66,9 +85,7 @@ def main(args):
             optimizer.zero_grad()
             image = image.to(device)  # Move image to device
             mask = mask.to(device)  # Move mask to device
-            image = image.unsqueeze(1)
-            outputs = model(image.repeat(1, 3, 1, 1))
-            # outputs = model(image)
+            outputs = model(image)
             loss = criterion(outputs, mask)
             loss.backward()
             optimizer.step()
@@ -91,9 +108,7 @@ def main(args):
                 mask = mask.view(-1, 1, 36, 36)
                 image = image.to(device)  # Move image to device
                 mask = mask.to(device)  # Move mask to device
-                image = image.unsqueeze(1)
-                outputs = model(image.repeat(1, 3, 1, 1))
-                # outputs = model(image)
+                outputs = model(image)
                 outputs = outputs.detach()  # Detach outputs from the computation graph
                 loss = criterion(outputs, mask)
                 val_loss += loss.item() * image.size(0)
@@ -113,36 +128,34 @@ def main(args):
         
     # Testing phase
     model.eval()
-    predicted_masks = []  # List to store predicted masks  
+    predicted_masks = []  # List to store predicted masks
     with torch.no_grad():
         for image, _, _ in test_loader:  # Ignore the masks in the test loader
-            
-            # Forward pass
-            image = image.to(device)  # Move image to device
-            image = image.unsqueeze(1)
-            output = model(image.repeat(1, 3, 1, 1)).detach()
-            # output = model(image).detach()
-            preds = output > args.threshold # Apply threshold to get binary predictions
+            image = image.to(device)
+            output = model(image).detach()
+            preds = output > args.threshold  # Apply threshold to get binary predictions
             preds = preds.int()
-            preds = preds.cpu().numpy()
-            
-            # Flatten each 36x36 mask into a 1D array
-            flattened_mask = preds.reshape(preds.shape[0], -1)
-            
-            # Convert predicted masks to numpy arrays
+
+            # Check the unique values and values less than -100
+            unique_values = torch.unique(image)
+            if len(unique_values) < 10 or torch.any(image < -100):
+                preds = torch.zeros_like(preds).int()  # Reset preds to zeros if conditions are met
+
+            # Ensure consistent shape for all flattened masks
+            flattened_mask = preds.cpu().numpy().reshape(-1, 36*36)  # Explicitly specify the flattened shape
             predicted_masks.extend(flattened_mask)
-    
+
     # Save predicted masks to a CSV file
-    predicted_masks = np.array(predicted_masks)
+    predicted_masks = np.vstack(predicted_masks)  # Stack the list of arrays into a single 2D array
     df = pd.DataFrame(predicted_masks)
-    
+
     files = [f[:-4] for f in os.listdir('data/raw/images_test') if os.path.isfile(os.path.join('data/raw/images_test', f))]
     sorted_files = sorted(files)
     df.index = sorted_files
-    
+
     prediction_path = "data/predictions/submission_" + args.experiment_name + '.csv'
     df.to_csv(prediction_path, index=True)
-    
+
     print("Predicted masks saved to predicted_masks.csv")
 
 if __name__ == "__main__":

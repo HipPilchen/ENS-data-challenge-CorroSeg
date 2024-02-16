@@ -42,7 +42,6 @@ class CorroSegDataset(Dataset):
     
     def process(self):
         
-
         taken_imgs = []
         taken_img_names = []
         
@@ -144,11 +143,11 @@ class CorroSegDataset(Dataset):
             img_name = self.masks['Unnamed: 0'].iloc[idx]
             img_path = os.path.join(self.processed_dir,'images_train',img_name+'.npy')
             image = torch.load(img_path).numpy()
+     
             well = int(img_name[5:7].replace('_', ''))
             
             mask = self.masks.drop(('Unnamed: 0'), axis = 1).iloc[idx].values
 
-            mask_tensor = torch.Tensor(mask) if self.transform_mask is None else self.transform_mask(torch.Tensor(mask))
         else:
             file_names = os.listdir(os.path.join(self.processed_dir,'images_test'))
             img_path = os.path.join(self.processed_dir,'images_test', file_names[idx])
@@ -156,10 +155,16 @@ class CorroSegDataset(Dataset):
             image = torch.load(img_path).numpy()
             
             # Return a dummy mask for test data
-            dummy_mask = torch.zeros(1296)  # Adjust the size according to your needs
-            mask_tensor = dummy_mask
+            dummy_mask = np.zeros(1296)  # Adjust the size according to your needs
+            mask = dummy_mask
+            
+        # Convert single-channel to 3-channel RGB
+        image = image[np.newaxis, :]
+        image = np.tile(image, (3, 1, 1))
+        mask = np.tile(mask, (3, 1, 1))
 
         image_tensor = torch.Tensor(image) if self.transform_img is None else self.transform_img(torch.Tensor(image))
+        mask_tensor = torch.Tensor(mask) if self.transform_mask is None else self.transform_mask(torch.Tensor(mask))
 
         return image_tensor, mask_tensor, torch.Tensor([well])    
             
@@ -190,8 +195,6 @@ class CorroSegDataset(Dataset):
         # else:
 
         #     return torch.Tensor(image), torch.Tensor(mask), torch.Tensor(well)
-
-    
 
 
 class CorroSeg():
