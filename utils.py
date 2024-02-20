@@ -1,5 +1,8 @@
 import torch
 import torch.nn as nn
+import os 
+import pandas as pd
+import numpy as np
 
 def iou_score(preds, targets):
     """
@@ -80,4 +83,25 @@ class RollTransform:
     def __call__(self, x):
         shift = torch.random.choice(self.shifts)
         return torch.roll(x, shift, dims = (0,1))
+    
+
+# Average the results of several models from submissions placed in a directory
+def average_submissions(dir_path = "data/predictions/averaging", new_name = "averaged_submission.csv"):
+    n = len(os.listdir(dir_path))
+    pred = np.zeros((n, 1296))
+    for i, sub_files in enumerate(os.listdir(dir_path)):
+        sub = pd.read_csv(os.path.join(dir_path, sub_files), index_col = 0)
+        pred[i, :] += sub.iloc[i].values
+        
+    predictions = (pred / n)>0.5
+    predictons = predictions.int()
+    df = pd.DataFrame(predictions)
+
+    files = [f.replace('.npy','') for f in os.listdir('data/processed/images_test')]
+    df.index = files
+
+    df.to_csv(os.path.join(dir_path,new_name), index=True)
+
+    print("Predicted averaged masks saved in predictions/averaging")
+
 
