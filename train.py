@@ -78,18 +78,10 @@ def main(args):
     train_loader, val_loader, test_loader = corro_seg.get_loaders()
 
     # Loss function and optimizer definition
-    
-    # total_pixel = 10882512
-    # pixel_0 = 10099900
-    # pixel_1 = 782612
-    # freq_0 = pixel_0 / total_pixel
-    # freq_1 = pixel_1 / total_pixel
-    # weight_for_0 = 1 / freq_0
-    # weight_for_1 = 1 / freq_1
-    # pos_weight = torch.tensor([weight_for_1 / weight_for_0]).to(device)
-    # criterion = nn.BCEWithLogitsLoss(pos_weight=pos_weight)
-    
-    criterion = SoftIoULoss()
+    if args.criterion == 'bce':
+        criterion = nn.BCEWithLogitsLoss()
+    elif args.criterion == 'iou':
+        criterion = SoftIoULoss()
     optimizer = torch.optim.Adam(model.parameters(), lr=args.learning_rate, weight_decay=args.weight_decay)
 
     for epoch in tqdm(range(args.num_epochs)):
@@ -161,7 +153,8 @@ def main(args):
 
             # Check the unique values and values less than -100
             unique_values = torch.unique(image)
-            if len(unique_values) < 10 or torch.any(image < -100):
+            # if len(unique_values) < 10 or torch.any(image < -100):
+            if torch.any(image < -100):
                 preds = torch.zeros_like(preds).int()  # Reset preds to zeros if conditions are met
 
             # Ensure consistent shape for all flattened masks
@@ -172,9 +165,8 @@ def main(args):
     predicted_masks = np.vstack(predicted_masks)  # Stack the list of arrays into a single 2D array
     df = pd.DataFrame(predicted_masks)
 
-    files = [f[:-4] for f in os.listdir('data/raw/images_test') if os.path.isfile(os.path.join('data/raw/images_test', f))]
-    sorted_files = sorted(files)
-    df.index = sorted_files
+    files = [f.replace('.npy','') for f in os.listdir('data/processed/images_test')]
+    df.index = files
 
     prediction_path = "data/predictions/submission_" + args.experiment_name + '.csv'
     df.to_csv(prediction_path, index=True)
@@ -202,10 +194,11 @@ if __name__ == "__main__":
         help="wandb username or team name to which runs are attributed"
     )
     parser.add_argument('-n', '--num-epochs', default=5, type=int,
-                        help="number of epochs to run") 
+                        help="number of epochs to run")
+    parser.add_argument('--criterion', default='bce', type=str)
     parser.add_argument('-bs','--batch-size', default=64, type=int)
     parser.add_argument('--valid-ratio', default=0.1, type=int)
-    parser.add_argument('--model-name', default='baseline', type=str)
+    parser.add_argument('--model-name', default='cnn', type=str)
     parser.add_argument('--backbone', default='efficientnet-v2-m', type=str)
     parser.add_argument('-lr', '--learning-rate', default=2e-5, type=float,
                         help="learning rate for Adam optimizer")
@@ -221,4 +214,4 @@ if __name__ == "__main__":
     args = parser.parse_args()
     main(args)
     
-# python3 train.py --wandb --wandb_entity lucasgascon --batch-size 64 --num-epochs 100 --model-name unet --backbone --experiment_name
+# python3 train.py --wandb --wandb_entity lucasgascon --batch-size 128 --num-epochs 100 --model-name unet --backbone --experiment_name

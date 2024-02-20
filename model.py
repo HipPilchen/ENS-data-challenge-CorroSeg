@@ -155,10 +155,76 @@ class UNet(nn.Module):
 
         return out
     
+
+class ConvBlock(nn.Module):
+    def __init__(self, in_channels, out_channels, kernel_size=3, padding=1):
+        super(ConvBlock, self).__init__()
+        self.conv = nn.Conv2d(in_channels, out_channels, kernel_size, padding=padding)
+        self.bn = nn.BatchNorm2d(out_channels)
+        self.relu = nn.ReLU(inplace=True)
+
+    def forward(self, x):
+        x = self.conv(x)
+        x = self.bn(x)
+        return self.relu(x)
+
+class SegmentationCNN(nn.Module):
+    def __init__(self):
+        super(SegmentationCNN, self).__init__()
+        self.conv1 = ConvBlock(3, 64)  # Assuming input images are RGB
+        self.conv2 = ConvBlock(64, 128)
+        self.conv3 = ConvBlock(128, 256)
+        self.conv4 = ConvBlock(256, 512)
+        self.conv5 = ConvBlock(512, 1024)
+
+        # Upsampling + Convolution layers to restore the original image size with 2 channels for segmentation
+        self.upconv4 = nn.ConvTranspose2d(1024, 512, 2, stride=2)
+        self.conv6 = ConvBlock(512, 512)
+
+        self.upconv3 = nn.ConvTranspose2d(512, 256, 2, stride=2)
+        self.conv7 = ConvBlock(256, 256)
+
+        self.upconv2 = nn.ConvTranspose2d(256, 128, 2, stride=2)
+        self.conv8 = ConvBlock(128, 128)
+
+        self.upconv1 = nn.ConvTranspose2d(128, 64, 2, stride=2)
+        self.conv9 = ConvBlock(64, 64)
+
+        # Final 1x1 convolution to get 2 channels for the two labels
+        self.final_conv = nn.Conv2d(64, 2, 1)
+
+    def forward(self, x):
+        # Pass input through the CNN blocks
+        x1 = self.conv1(x)
+        x2 = self.conv2(x1)
+        x3 = self.conv3(x2)
+        x4 = self.conv4(x3)
+        x5 = self.conv5(x4)
+
+        # Upsample and pass through additional convolutions
+        x = self.upconv4(x5)
+        x = self.conv6(x + x4)  # Skip connection
+
+        x = self.upconv3(x)
+        x = self.conv7(x + x3)  # Skip connection
+
+        x = self.upconv2(x)
+        x = self.conv8(x + x2)  # Skip connection
+
+        x = self.upconv1(x)
+        x = self.conv9(x + x1)  # Skip connection
+
+        # Final convolution to get 2 channels
+        out = self.final_conv(x)
+
+        return out
+    
                 
 def get_model(model_name, backbone_name, fpn=False, backbone_pretrained=True):
-    if model_name == 'baseline':
+    if model_name == 'first_model':
         model = BinarySegmentationModel(fpn=fpn, backbone_name=backbone_name, backbone_pretrained=backbone_pretrained)
-    if model_name == 'unet':
+    elif model_name == 'unet':
         model = UNet()
+    elif model_name == 'cnn':
+        model = SegmentationCNN()
     return model
