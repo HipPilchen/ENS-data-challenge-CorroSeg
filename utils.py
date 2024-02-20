@@ -70,3 +70,14 @@ def iou_loss_pytorch(boxA, boxB):
 
     # Loss is 1 - IoU
     return 1 - iou
+
+class RollTransform:
+    """Roll by one of the given angles."""
+
+    def __init__(self):
+        self.shifts = [(i*5,i*5) for i in range(20)]
+
+    def __call__(self, x):
+        shift = torch.random.choice(self.shifts)
+        return torch.roll(x, shift, dims = (0,1))
+

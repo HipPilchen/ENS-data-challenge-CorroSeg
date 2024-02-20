@@ -201,8 +201,11 @@ class CorroSeg():
     def __init__(self, data_dir, csv_file, shuffle = True,
                  batch_size = 64, valid_ratio = 0.1, transform_img=None, transform_mask=None, 
                  transform_test=None, test_params={'batch_size': 64, 'shuffle': False}):
-        
-        self.corroseg_dataset = CorroSegDataset(data_dir, test = False, transform_img=transform_img, transform_mask=transform_mask)
+        self.corroseg_dataset = CorroSegDataset(data_dir, test = False, transform_img=transform_img[0], transform_mask=transform_mask[0])
+        for i, trans_image, trans_mask in enumerate(zip(transform_img, transform_mask)):
+            if i > 0:
+                self.corroseg_dataset = torch.utils.data.ConcatDataset([self.corroseg_dataset,
+                                                                        CorroSegDataset(data_dir, test = False, transform_img=transform_img[i], transform_mask=transform_mask[i])])
         
         self.train_data, self.valid_data = torch.utils.data.random_split(self.corroseg_dataset, [1-valid_ratio, valid_ratio])
         self.train_dataloader = DataLoader(self.train_data, batch_size=batch_size, shuffle=shuffle)

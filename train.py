@@ -1,4 +1,4 @@
-from utils import iou_score, SoftIoULoss
+from utils import iou_score, SoftIoULoss, RollTransform
 # from torch.utils.tensorboard import SummaryWriter
 import torch.nn as nn
 import torch
@@ -15,8 +15,10 @@ import datetime
 from datetime import datetime
 
 def main(args):
+    
     if args.experiment_name is None:
             args.experiment_name = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+            
     if(args.wandb):
         wandb.init(
             name=args.experiment_name,
@@ -34,20 +36,41 @@ def main(args):
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     model = get_model(model_name=args.model_name, backbone_name=args.backbone).to(device)
     
-    transform_img = transforms.Compose([
+
+    # Possible transforms: transforms.RandomHorizontalFlip(), transforms.RandomVerticalFlip(), t
+        
+    transform_img = [transforms.Compose([transforms.ToPILImage(),transforms.ToTensor()]),  
+        transforms.Compose([
         transforms.ToPILImage(),
-        transforms.RandomHorizontalFlip(),
+        transforms.RandomHorizontalFlip(1),
+        transforms.ToTensor(),
+        ]),
+        transforms.Compose([
+        transforms.ToPILImage(),
+        transforms.RandomVerticalFlip(1),
+        transforms.ToTensor(),
+        ]),
+        RollTransform()
+    ]
+    # pk faire ça ca marche pas transform sur une channel ? 
+    transform_mask = [transforms.Compose([transforms.ToPILImage(),transforms.ToTensor(),  transforms.Lambda(lambda x: x[0, :, :])]),  
+        transforms.Compose([
+        transforms.ToPILImage(),
+        transforms.RandomHorizontalFlip(1),
         # transforms.ColorJitter(brightness=0.1, contrast=0.1, saturation=0.1, hue=0.1),  # Optional: Color Jitter
         transforms.ToTensor(),
-    ])
-
-    transform_mask = transforms.Compose([
+        transforms.Lambda(lambda x: x[0, :, :])
+        ]),
+        transforms.Compose([
         transforms.ToPILImage(),
-        transforms.RandomHorizontalFlip(),  # Ensure this is the same as the image transformation
-        # Do not apply color jittering or normalization to masks
+        transforms.RandomVerticalFlip(1),
+        # transforms.ColorJitter(brightness=0.1, contrast=0.1, saturation=0.1, hue=0.1),  # Optional: Color Jitter
         transforms.ToTensor(),
-        transforms.Lambda(lambda x: x[0, :, :]),  # Ensure that the mask has only one channel
-    ])
+        transforms.Lambda(lambda x: x[0, :, :])
+        ]),
+        RollTransform()
+    ]
+
     
     corro_seg = CorroSeg('data', 'y_train.csv', shuffle = True,
                  batch_size = args.batch_size, valid_ratio = args.valid_ratio, transform_img=transform_img, transform_mask=transform_mask, 
