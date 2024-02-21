@@ -12,7 +12,7 @@ class ResNetBackbone(nn.Module):
     def forward(self, x):
         x = self.features(x)
         # x = self.adaptive_pool(x)
-        return x
+        return torch.sigmoid(x)
 
 class EfficientNetBackbone(nn.Module):
     def __init__(self, backbone, fpn=False, selected_layers=None):
@@ -27,7 +27,7 @@ class EfficientNetBackbone(nn.Module):
         #     if i in self.selected_layers:
         #         features.append(x)
         features = self.features(x)
-        return features
+        return torch.sigmoid(features)
     
 def get_backbone(backbone_name, fpn=False, pretrained=True):
     backbone_factory = {
@@ -89,6 +89,35 @@ class BinarySegmentationModel(nn.Module):
         for child in list(self.backbone.children())[-num_layers:]:
             for param in child.parameters():
                 param.requires_grad = True
+                
+                
+
+
+# Définir le modèle CNN
+class baseline_CNN(nn.Module):
+    def __init__(self):
+        super(baseline_CNN, self).__init__()
+        self.conv1 = nn.Conv2d(3, 32, kernel_size=3, padding = (1,1))  # Couche 1 : Convolution
+        self.conv2 = nn.Conv2d(32, 64, kernel_size=3, padding = (1,1))  # Couche 2 : Convolution
+        self.conv3 = nn.Conv2d(64, 128, kernel_size=3, padding = (1,1))  # Couche 3 : Convolution
+        self.conv4 = nn.Conv2d(128, 256, kernel_size=3, padding = (1,1))  # Couche 4 : Convolution
+        self.conv5 = nn.Conv2d(256, 512, kernel_size=3, padding = (1,1))  # Couche 5 : Convolution
+        self.fc1 = nn.Linear(512 * 36 * 36, 36*36)  # Couche Dense
+        self.fc2 = nn.Linear(36*36, 36*36)  # Couche de sortie
+
+    def forward(self, x):
+        x = torch.relu(self.conv1(x))
+        x = torch.relu(self.conv2(x))
+        x = torch.relu(self.conv3(x))
+        x = torch.relu(self.conv4(x))
+        x = torch.relu(self.conv5(x))
+        # print(x.shape)
+        x = x.view(-1, 512 * 36 * 36)  # Aplatir les données
+        x = torch.relu(self.fc1(x))
+        x = torch.sigmoid(self.fc2(x)).view(-1,1,36,36)  # Sigmoid pour la classification binaire
+        return x
+
+
                 
 class UNet(nn.Module):
     def __init__(self):
@@ -153,13 +182,13 @@ class UNet(nn.Module):
         # Upsample back to the input size
         out = F.interpolate(out, size=(36, 36), mode='bilinear', align_corners=False)
 
-        return out
+        return torch.sigmoid(out)
     
 
 class ConvBlock(nn.Module):
     def __init__(self, in_channels, out_channels, kernel_size=3, padding=1):
         super(ConvBlock, self).__init__()
-        self.conv = nn.Conv2d(in_channels, out_channels, kernel_size, stride=1, padding=padding)
+        self.conv = nn.Conv2d(in_channels, out_channels, kernel_size, padding=padding)
         self.bn = nn.BatchNorm2d(out_channels)
         self.relu = nn.ReLU(inplace=True)
 
@@ -168,72 +197,56 @@ class ConvBlock(nn.Module):
         x = self.bn(x)
         return self.relu(x)
 
-class UpConvBlock(nn.Module):
-    def __init__(self, in_channels, out_channels, kernel_size=3, scale_factor=2):
-        super(UpConvBlock, self).__init__()
-        self.scale_factor = scale_factor
-        self.conv = ConvBlock(in_channels, out_channels, kernel_size)
-
-    def forward(self, x):
-        x = F.interpolate(x, scale_factor=self.scale_factor, mode='bilinear', align_corners=True)
-        x = self.conv(x)
-        return x
-
 class SegmentationCNN(nn.Module):
     def __init__(self):
         super(SegmentationCNN, self).__init__()
-        # Downsampling path
-        self.conv1 = ConvBlock(3, 64)
+        self.conv1 = ConvBlock(3, 64)  # Assuming input images are RGB
         self.conv2 = ConvBlock(64, 128)
         self.conv3 = ConvBlock(128, 256)
         self.conv4 = ConvBlock(256, 512)
         self.conv5 = ConvBlock(512, 1024)
 
-        # Upsampling path
-        self.upconv4 = UpConvBlock(1024, 512)
-        self.conv6 = ConvBlock(1024, 512)
-        
-        self.upconv3 = UpConvBlock(512, 256)
-        self.conv7 = ConvBlock(512, 256)
-        
-        self.upconv2 = UpConvBlock(256, 128)
-        self.conv8 = ConvBlock(256, 128)
-        
-        self.upconv1 = UpConvBlock(128, 64)
-        self.conv9 = ConvBlock(128, 64)
+        # Upsampling + Convolution layers to restore the original image size with 2 channels for segmentation
+        self.upconv4 = nn.ConvTranspose2d(1024, 512, 2, stride=2)
+        self.conv6 = ConvBlock(512, 512)
 
-        # Final convolution
-        self.final_conv = nn.Conv2d(64, 2, 1)  # 2 channels for binary segmentation
+        self.upconv3 = nn.ConvTranspose2d(512, 256, 2, stride=2)
+        self.conv7 = ConvBlock(256, 256)
+
+        self.upconv2 = nn.ConvTranspose2d(256, 128, 2, stride=2)
+        self.conv8 = ConvBlock(128, 128)
+
+        self.upconv1 = nn.ConvTranspose2d(128, 64, 2, stride=2)
+        self.conv9 = ConvBlock(64, 64)
+
+        # Final 1x1 convolution to get 2 channels for the two labels
+        self.final_conv = nn.Conv2d(64, 2, 1)
 
     def forward(self, x):
-        # Downsampling
+        # Pass input through the CNN blocks
         x1 = self.conv1(x)
         x2 = self.conv2(x1)
         x3 = self.conv3(x2)
         x4 = self.conv4(x3)
         x5 = self.conv5(x4)
 
-        # Upsampling with skip connections
-        x = self.dynamic_crop_and_concat(self.upconv4(x5), x4)
-        x = self.conv6(x)
-        
-        x = self.dynamic_crop_and_concat(self.upconv3(x), x3)
-        x = self.conv7(x)
-        
-        x = self.dynamic_crop_and_concat(self.upconv2(x), x2)
-        x = self.conv8(x)
-        
-        x = self.dynamic_crop_and_concat(self.upconv1(x), x1)
-        x = self.conv9(x)
+        # Upsample and pass through additional convolutions
+        x = self.upconv4(x5)
+        x = self.conv6(x + x4)  # Skip connection
 
-        # Final convolution
+        x = self.upconv3(x)
+        x = self.conv7(x + x3)  # Skip connection
+
+        x = self.upconv2(x)
+        x = self.conv8(x + x2)  # Skip connection
+
+        x = self.upconv1(x)
+        x = self.conv9(x + x1)  # Skip connection
+
+        # Final convolution to get 2 channels
         out = self.final_conv(x)
-        return out
 
-    def dynamic_crop_and_concat(self, upsampled, bypass):
-        c = (bypass.size()[2] - upsampled.size()[2]) // 2
-        bypass = F.pad(bypass, (-c, -c, -c, -c))
-        return torch.cat((upsampled, bypass), 1)
+        return torch.sigmoid(out)
     
                 
 def get_model(model_name, backbone_name, fpn=False, backbone_pretrained=True):
@@ -243,4 +256,6 @@ def get_model(model_name, backbone_name, fpn=False, backbone_pretrained=True):
         model = UNet()
     elif model_name == 'cnn':
         model = SegmentationCNN()
+    elif model_name == 'baseline_cnn':
+        model = baseline_CNN()
     return model

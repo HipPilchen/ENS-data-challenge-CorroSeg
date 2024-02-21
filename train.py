@@ -1,4 +1,5 @@
-from utils import iou_score, SoftIoULoss, RollTransform
+from utils import iou_score, RollTransform
+from losses import SoftIoULoss, FocalLoss
 # from torch.utils.tensorboard import SummaryWriter
 import torch.nn as nn
 import torch
@@ -13,6 +14,8 @@ import numpy as np
 import os
 import datetime
 from datetime import datetime
+
+freq_corrosion = 7./100
 
 def main(args):
     
@@ -50,7 +53,7 @@ def main(args):
         transforms.RandomVerticalFlip(1),
         transforms.ToTensor(),
         ]),
-        # RollTransform()
+        RollTransform()
     ]
     # pk faire ça ca marche pas transform sur une channel ? 
     transform_mask = [transforms.Compose([transforms.ToPILImage(),transforms.ToTensor(),  transforms.Lambda(lambda x: x[0, :, :])]),  
@@ -68,7 +71,7 @@ def main(args):
         transforms.ToTensor(),
         transforms.Lambda(lambda x: x[0, :, :])
         ]),
-        # RollTransform()
+        transforms.Compose([RollTransform(),  transforms.Lambda(lambda x: x[0, :, :])])
     ]
 
     
@@ -82,6 +85,8 @@ def main(args):
         criterion = nn.BCEWithLogitsLoss()
     elif args.criterion == 'iou':
         criterion = SoftIoULoss()
+    elif args.criterion == 'focal':
+        criterion = FocalLoss(args.gamma,1/freq_corrosion)
     optimizer = torch.optim.Adam(model.parameters(), lr=args.learning_rate, weight_decay=args.weight_decay)
 
     for epoch in tqdm(range(args.num_epochs)):
@@ -173,6 +178,7 @@ def main(args):
 
     print("Predicted masks saved to predicted_masks.csv")
 
+
 if __name__ == "__main__":
     
     parser = argparse.ArgumentParser()  
@@ -210,8 +216,9 @@ if __name__ == "__main__":
     parser.add_argument('-layers_to_unfreeze_each_time', default=100, type=int,
                         help="Number of layers to unfreeze")
     parser.add_argument('-wd','--weight-decay',type=float, default = 0.01, help = 'Weight decay')
+    parser.add_argument('-gamma',type=float, default = 3, help = 'Gamma for focal loss')
 
     args = parser.parse_args()
     main(args)
     
-# python3 train.py --wandb --wandb_entity lucasgascon --batch-size 64 --num-epochs 100 --model-name unet --backbone --experiment_name
+# python3 train.py --wandb --wandb_entity lucasgascon --batch-size 128 --num-epochs 100 --model-name unet --backbone --experiment_name

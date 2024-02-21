@@ -28,26 +28,7 @@ def iou_score(preds, targets):
 
     return iou.mean()  # Return the mean IoU score over the batch
 
-class SoftIoULoss(nn.Module):
-    def __init__(self, smooth=1e-6):
-        super(SoftIoULoss, self).__init__()
-        self.smooth = smooth
 
-    def forward(self, preds, targets):
-        # Flatten the tensors to make the calculation easier
-        preds_flat = preds.view(-1)
-        targets_flat = targets.view(-1)
-
-        # Calculate intersection and union areas
-        intersection = torch.sum(preds_flat * targets_flat)
-        total = torch.sum(preds_flat + targets_flat)
-        union = total - intersection
-
-        # Compute the IoU score
-        IoU = (intersection + self.smooth) / (union + self.smooth)
-
-        # Return the IoU loss
-        return 1 - IoU  # Subtracting from 1 to make it a loss (lower is better)
 
 def iou_loss_pytorch(boxA, boxB):
     # Ensure the coordinates are tensors
@@ -78,12 +59,13 @@ class RollTransform:
     """Roll by one of the given angles."""
 
     def __init__(self):
-        self.shifts = [(i*5,i*5) for i in range(20)]
+        self.lat_shifts = [(i*5,i*5) for i in range(20)]
+        self.long_shifts = [(i*5,i*5) for i in range(20)]
 
     def __call__(self, x):
-        idx = np.random.randint(len(self.shifts))
-        shift = self.shifts[idx]
-        return torch.roll(x, shift, dims = (1, 2))
+        lat_shift = np.random.choice(self.lat_shifts)
+        long_shift = np.random.choice(self.long_shifts)
+        return torch.roll(x, (lat_shift,long_shift), dims = (1,2))
     
 
 # Average the results of several models from submissions placed in a directory
