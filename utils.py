@@ -81,8 +81,9 @@ class RollTransform:
         self.shifts = [(i*5,i*5) for i in range(20)]
 
     def __call__(self, x):
-        shift = torch.random.choice(self.shifts)
-        return torch.roll(x, shift, dims = (0,1))
+        idx = np.random.randint(len(self.shifts))
+        shift = self.shifts[idx]
+        return torch.roll(x, shift, dims = (1, 2))
     
 
 # Average the results of several models from submissions placed in a directory

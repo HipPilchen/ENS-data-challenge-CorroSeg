@@ -205,7 +205,7 @@ class CorroSeg():
             self.corroseg_dataset = CorroSegDataset(data_dir, test = False)
         else:
             self.corroseg_dataset = CorroSegDataset(data_dir, test = False, transform_img=transform_img[0], transform_mask=transform_mask[0])
-            for i, trans_image, trans_mask in enumerate(zip(transform_img, transform_mask)):
+            for i, (trans_image, trans_mask) in enumerate(zip(transform_img, transform_mask)):
                 if i > 0:
                     self.corroseg_dataset = torch.utils.data.ConcatDataset([self.corroseg_dataset,
                                                                             CorroSegDataset(data_dir, test = False, transform_img=trans_image, transform_mask=trans_mask)])

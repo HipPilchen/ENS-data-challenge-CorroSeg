@@ -50,7 +50,7 @@ def main(args):
         transforms.RandomVerticalFlip(1),
         transforms.ToTensor(),
         ]),
-        RollTransform()
+        # RollTransform()
     ]
     # pk faire ça ca marche pas transform sur une channel ? 
     transform_mask = [transforms.Compose([transforms.ToPILImage(),transforms.ToTensor(),  transforms.Lambda(lambda x: x[0, :, :])]),  
@@ -68,7 +68,7 @@ def main(args):
         transforms.ToTensor(),
         transforms.Lambda(lambda x: x[0, :, :])
         ]),
-        RollTransform()
+        # RollTransform()
     ]
 
     
@@ -214,4 +214,4 @@ if __name__ == "__main__":
     args = parser.parse_args()
     main(args)
     
-# python3 train.py --wandb --wandb_entity lucasgascon --batch-size 128 --num-epochs 100 --model-name unet --backbone --experiment_name
+# python3 train.py --wandb --wandb_entity lucasgascon --batch-size 64 --num-epochs 100 --model-name unet --backbone --experiment_name
