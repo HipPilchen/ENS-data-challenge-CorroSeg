@@ -5,8 +5,6 @@ import pandas as pd
 import numpy as np
 import torch.nn.functional as F
 
-
-
 class SoftIoULoss(nn.Module):
     def __init__(self, smooth=1e-6):
         super(SoftIoULoss, self).__init__()

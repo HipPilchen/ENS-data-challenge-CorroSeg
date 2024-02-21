@@ -3,3 +3,4 @@ legacy/
 wandb/
 test.ipynb
 __pycache__/
+train.ipynb
