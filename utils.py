@@ -63,9 +63,16 @@ class RollTransform:
         self.long_shifts = [(i*5,i*5) for i in range(20)]
 
     def __call__(self, x):
-        lat_shift = np.random.choice(self.lat_shifts)
-        long_shift = np.random.choice(self.long_shifts)
-        return torch.roll(x, (lat_shift,long_shift), dims = (1,2))
+        # Randomly select an index for latitude and longitude shifts
+        lat_index = np.random.randint(len(self.lat_shifts))
+        long_index = np.random.randint(len(self.long_shifts))
+        
+        # Use the selected indices to get the shift values
+        lat_shift = self.lat_shifts[lat_index]
+        long_shift = self.long_shifts[long_index]
+
+        # Apply the roll with the selected shift values
+        return torch.roll(x, shifts=(lat_shift[0], long_shift[1]), dims=(1, 2))
     
 
 # Average the results of several models from submissions placed in a directory
