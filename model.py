@@ -178,10 +178,8 @@ class UNet(nn.Module):
 
         # Final classification layer
         out = self.final_conv(dec1)
-        
         # Upsample back to the input size
         out = F.interpolate(out, size=(36, 36), mode='bilinear', align_corners=False)
-
         return torch.sigmoid(out)
     
 

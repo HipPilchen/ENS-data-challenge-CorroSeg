@@ -17,8 +17,8 @@ def iou_score(preds, targets):
         torch.Tensor: The IoU score for each mask in the batch.
     """
     # Calculate the intersection and union
-    intersection = torch.logical_and(preds, targets).float().sum((0,1, 2, 3))  # Sum over the mask dimensions
-    union = torch.logical_or(preds, targets).float().sum((0,1, 2, 3))
+    intersection = torch.logical_and(preds, targets).float().sum((1, 2, 3))  # Sum over the mask dimensions
+    union = torch.logical_or(preds, targets).float().sum((1, 2, 3))
 
     # Avoid division by zero by adding a small epsilon
     epsilon = 1e-6
