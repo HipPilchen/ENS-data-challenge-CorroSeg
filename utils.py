@@ -17,8 +17,8 @@ def iou_score(preds, targets):
         torch.Tensor: The IoU score for each mask in the batch.
     """
     # Calculate the intersection and union
-    intersection = torch.logical_and(preds, targets).float().sum((1, 2, 3))  # Sum over the mask dimensions
-    union = torch.logical_or(preds, targets).float().sum((1, 2, 3))
+    intersection = torch.logical_and(preds, targets).float().sum((0,1, 2, 3))  # Sum over the mask dimensions
+    union = torch.logical_or(preds, targets).float().sum((0,1, 2, 3))
 
     # Avoid division by zero by adding a small epsilon
     epsilon = 1e-6
@@ -62,9 +62,11 @@ class RollTransform:
         self.lat_shifts = [(i*5,i*5) for i in range(20)]
         self.long_shifts = [(i*5,i*5) for i in range(20)]
 
-    def __call__(self, x):
+    def __call__(self, x, random_state=[1,1]):
         # Randomly select an index for latitude and longitude shifts
+        np.random.seed(random_state[0])
         lat_index = np.random.randint(len(self.lat_shifts))
+        np.random.seed(random_state[1])
         long_index = np.random.randint(len(self.long_shifts))
         
         # Use the selected indices to get the shift values
@@ -72,7 +74,7 @@ class RollTransform:
         long_shift = self.long_shifts[long_index]
 
         # Apply the roll with the selected shift values
-        return torch.roll(x, shifts=(lat_shift[0], long_shift[1]), dims=(1, 2))
+        return torch.roll(x, shifts=(lat_shift[0], long_shift[1]), dims=(-2, -1))
     
 
 # Average the results of several models from submissions placed in a directory

@@ -15,7 +15,6 @@ import os
 import datetime
 from datetime import datetime
 
-freq_corrosion = 7./100
 
 def main(args):
     
@@ -42,43 +41,21 @@ def main(args):
 
     # Possible transforms: transforms.RandomHorizontalFlip(), transforms.RandomVerticalFlip(), t
         
-    transform_img = [transforms.Compose([transforms.ToPILImage(),transforms.ToTensor()]),  
-        transforms.Compose([
-        transforms.ToPILImage(),
+    transform_img = [None,
         transforms.RandomHorizontalFlip(1),
-        transforms.ToTensor(),
-        ]),
-        transforms.Compose([
-        transforms.ToPILImage(),
-        transforms.RandomVerticalFlip(1),
-        transforms.ToTensor(),
-        ]),
-        RollTransform()
-    ]
-    # pk faire ça ca marche pas transform sur une channel ? 
-    transform_mask = [transforms.Compose([transforms.ToPILImage(),transforms.ToTensor(),  transforms.Lambda(lambda x: x[0, :, :])]),  
-        transforms.Compose([
-        transforms.ToPILImage(),
-        transforms.RandomHorizontalFlip(1),
-        # transforms.ColorJitter(brightness=0.1, contrast=0.1, saturation=0.1, hue=0.1),  # Optional: Color Jitter
-        transforms.ToTensor(),
-        transforms.Lambda(lambda x: x[0, :, :])
-        ]),
-        transforms.Compose([
-        transforms.ToPILImage(),
-        transforms.RandomVerticalFlip(1),
-        # transforms.ColorJitter(brightness=0.1, contrast=0.1, saturation=0.1, hue=0.1),  # Optional: Color Jitter
-        transforms.ToTensor(),
-        transforms.Lambda(lambda x: x[0, :, :])
-        ]),
-        transforms.Compose([RollTransform(),  transforms.Lambda(lambda x: x[0, :, :])])
-    ]
+        transforms.RandomVerticalFlip(1),RollTransform(),
+        transforms.Compose([transforms.RandomVerticalFlip(1),transforms.RandomHorizontalFlip(1)]),]
 
+ 
     
     corro_seg = CorroSeg('data', 'y_train.csv', shuffle = True,
-                 batch_size = args.batch_size, valid_ratio = args.valid_ratio, transform_img=transform_img, transform_mask=transform_mask, 
-                 transform_test=None, test_params={'batch_size': 1, 'shuffle': False})
+                 batch_size = args.batch_size, valid_ratio = args.valid_ratio, transform_img=transform_img,  
+                 transform_test=None, test_params={'batch_size': args.batch_size, 'shuffle': False})
     train_loader, val_loader, test_loader = corro_seg.get_loaders()
+    print("Data loaded")
+    # print("Number of training images: ", len(train_loader.dataset))
+    # print("Number of validation images: ", len(val_loader.dataset))
+    # print("Number of test images: ", len(test_loader.dataset))
 
     # Loss function and optimizer definition
     if args.criterion == 'bce':
@@ -86,8 +63,9 @@ def main(args):
     elif args.criterion == 'iou':
         criterion = SoftIoULoss()
     elif args.criterion == 'focal':
-        criterion = FocalLoss(args.gamma,1/freq_corrosion)
+        criterion = FocalLoss(args.gamma,args.alpha)
     optimizer = torch.optim.Adam(model.parameters(), lr=args.learning_rate, weight_decay=args.weight_decay)
+
 
     for epoch in tqdm(range(args.num_epochs)):
         # Defreezing strategy
@@ -101,7 +79,9 @@ def main(args):
         train_iou = 0.0
         
         for image, mask, well in tqdm(train_loader):
-            mask = mask.view(-1, 1, 36, 36)
+            if args.model_need_GRAY:
+                image = torch.mean(image, dim=1, keepdim=True)
+            mask = torch.mean(mask, dim=1, keepdim = True)
             optimizer.zero_grad()
             image = image.to(device)  # Move image to device
             mask = mask.to(device)  # Move mask to device
@@ -111,8 +91,8 @@ def main(args):
             optimizer.step()
             
             train_loss += loss.item() * image.size(0)
-            preds = outputs > args.threshold  # Apply threshold to get binary predictions
-            preds = preds.int()
+            # Apply threshold to get binary predictions
+            preds = (outputs - args.threshold).round()
             train_iou += iou_score(preds, mask).item() * image.size(0)
         
         train_loss /= len(train_loader.dataset)
@@ -125,15 +105,17 @@ def main(args):
         
         with torch.no_grad():
             for image, mask, well in tqdm(val_loader):
-                mask = mask.view(-1, 1, 36, 36)
+                if args.model_need_GRAY:
+                    image = torch.mean(image, dim=1, keepdim=True)
+                mask = torch.mean(mask, dim=1, keepdim = True)
                 image = image.to(device)  # Move image to device
                 mask = mask.to(device)  # Move mask to device
                 outputs = model(image)
                 outputs = outputs.detach()  # Detach outputs from the computation graph
                 loss = criterion(outputs, mask)
                 val_loss += loss.item() * image.size(0)
-                preds = outputs > args.threshold  # Apply threshold to get binary predictions
-                preds = preds.int()
+                # Apply threshold to get binary predictions
+                preds = (outputs - args.threshold).round()
                 val_iou += iou_score(preds, mask).item() * image.size(0)
         
         val_loss /= len(val_loader.dataset)
@@ -151,6 +133,9 @@ def main(args):
     predicted_masks = []  # List to store predicted masks
     with torch.no_grad():
         for image, _, _ in test_loader:  # Ignore the masks in the test loader
+            if args.model_need_GRAY:
+                image = torch.mean(image, dim=1, keepdim=True)
+
             image = image.to(device)
             output = model(image).detach()
             preds = output > args.threshold  # Apply threshold to get binary predictions
@@ -217,6 +202,8 @@ if __name__ == "__main__":
                         help="Number of layers to unfreeze")
     parser.add_argument('-wd','--weight-decay',type=float, default = 0.01, help = 'Weight decay')
     parser.add_argument('-gamma',type=float, default = 3, help = 'Gamma for focal loss')
+    parser.add_argument('-alpha',type=float, default = 15, help = 'Alpha for focal loss')
+    parser.add_argument('--model_need_GRAY',action="store_true", help = 'Whether to tile in 3 channels or not, by default RGB 3 channels')
 
     args = parser.parse_args()
     main(args)

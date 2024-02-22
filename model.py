@@ -220,7 +220,7 @@ class SegmentationCNN(nn.Module):
         self.conv9 = ConvBlock(64, 64)
 
         # Final 1x1 convolution to get 2 channels for the two labels
-        self.final_conv = nn.Conv2d(64, 2, 1)
+        self.final_conv = nn.Conv2d(64, 1, 1, stride = 16)
 
     def forward(self, x):
         # Pass input through the CNN blocks
@@ -232,16 +232,16 @@ class SegmentationCNN(nn.Module):
 
         # Upsample and pass through additional convolutions
         x = self.upconv4(x5)
-        x = self.conv6(x + x4)  # Skip connection
+        x = self.conv6(x + F.interpolate(x4, size=x.size()[2:], mode='bilinear', align_corners=False))  # Skip connection
 
         x = self.upconv3(x)
-        x = self.conv7(x + x3)  # Skip connection
+        x = self.conv7(x + F.interpolate(x3, size=x.size()[2:], mode='bilinear', align_corners=False))  # Skip connection
 
         x = self.upconv2(x)
-        x = self.conv8(x + x2)  # Skip connection
+        x = self.conv8(x + F.interpolate(x2, size=x.size()[2:], mode='bilinear', align_corners=False))  # Skip connection
 
         x = self.upconv1(x)
-        x = self.conv9(x + x1)  # Skip connection
+        x = self.conv9(x + F.interpolate(x1, size=x.size()[2:], mode='bilinear', align_corners=False))  # Skip connection
 
         # Final convolution to get 2 channels
         out = self.final_conv(x)

@@ -4,11 +4,12 @@ import numpy as np
 import torch
 from torch.utils.data import Dataset, DataLoader
 from sklearn.preprocessing import RobustScaler
+from utils import RollTransform
 from tqdm.auto import tqdm
 
 
 class CorroSegDataset(Dataset):
-    def __init__(self, data_dir, test = True, transform_img=None, transform_mask=None):
+    def __init__(self, data_dir, test = True, transform_img=None):
         """
         Arguments:
             csv_file (string): Path to the csv file with annotations.
@@ -19,7 +20,6 @@ class CorroSegDataset(Dataset):
          
         self.data_dir = data_dir
         self.transform_img = transform_img
-        self.transform_mask = transform_mask
         
         self.test = test
         self.masks = None
@@ -161,10 +161,20 @@ class CorroSegDataset(Dataset):
         # Convert single-channel to 3-channel RGB
         image = image[np.newaxis, :]
         image = np.tile(image, (3, 1, 1))
-        mask = np.tile(mask, (3, 1, 1))
+        mask= np.tile(mask, (3, 1, 1))
+        mask = mask.reshape(3, 36, 36)
 
-        image_tensor = torch.Tensor(image) if self.transform_img is None else self.transform_img(torch.Tensor(image))
-        mask_tensor = torch.Tensor(mask) if self.transform_mask is None else self.transform_mask(torch.Tensor(mask))
+        random_states = [np.random.randint(0,100), np.random.randint(0,100)]
+        
+        if self.transform_img is None:
+            image_tensor = torch.Tensor(image) 
+            mask_tensor = torch.Tensor(image) 
+        elif isinstance(self.transform_img,RollTransform):    
+            image_tensor = self.transform_img(torch.Tensor(image), random_states)
+            mask_tensor = self.transform_img(torch.Tensor(mask), random_states)
+        else: 
+            image_tensor = self.transform_img(torch.Tensor(image)) 
+            mask_tensor = self.transform_img(torch.Tensor(mask))
 
         return image_tensor, mask_tensor, torch.Tensor([well])    
             
@@ -199,16 +209,16 @@ class CorroSegDataset(Dataset):
 
 class CorroSeg():
     def __init__(self, data_dir, csv_file, shuffle = True,
-                 batch_size = 64, valid_ratio = 0.1, transform_img=None, transform_mask=None, 
+                 batch_size = 64, valid_ratio = 0.1, transform_img=None, 
                  transform_test=None, test_params={'batch_size': 64, 'shuffle': False}):
         if transform_img is None:
             self.corroseg_dataset = CorroSegDataset(data_dir, test = False)
         else:
-            self.corroseg_dataset = CorroSegDataset(data_dir, test = False, transform_img=transform_img[0], transform_mask=transform_mask[0])
-            for i, (trans_image, trans_mask) in enumerate(zip(transform_img, transform_mask)):
+            self.corroseg_dataset = CorroSegDataset(data_dir, test = False, transform_img=transform_img[0])
+            for i, trans_image in enumerate(transform_img):
                 if i > 0:
                     self.corroseg_dataset = torch.utils.data.ConcatDataset([self.corroseg_dataset,
-                                                                            CorroSegDataset(data_dir, test = False, transform_img=trans_image, transform_mask=trans_mask)])
+                                                                            CorroSegDataset(data_dir, test = False, transform_img=trans_image)])
         
         self.train_data, self.valid_data = torch.utils.data.random_split(self.corroseg_dataset, [1-valid_ratio, valid_ratio])
         self.train_dataloader = DataLoader(self.train_data, batch_size=batch_size, shuffle=shuffle)
