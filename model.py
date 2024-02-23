@@ -90,8 +90,7 @@ class BinarySegmentationModel(nn.Module):
             for param in child.parameters():
                 param.requires_grad = True
                 
-                
-
+            
 
 # Définir le modèle CNN
 class baseline_CNN(nn.Module):
@@ -246,73 +245,80 @@ class SegmentationCNN(nn.Module):
 
         return torch.sigmoid(out)
     
-
-
                 
 class Jacard_UNet(nn.Module):
     def __init__(self, pretrained=True):
-        super(UNet, self).__init__()
-        # Load a pretrained ResNet and use it as the encoder
-        self.base_model = models.resnet50(pretrained=pretrained)
-        self.base_layers = list(self.base_model.children())
+        super(Jacard_UNet, self).__init__()
 
-        self.encoder1 = nn.Sequential(*self.base_layers[:3])  # Initial conv + bn + relu + maxpool
-        self.encoder2 = nn.Sequential(*self.base_layers[3:5])  # Layer 1
-        self.encoder3 = self.base_layers[5]  # Layer 2
-        self.encoder4 = self.base_layers[6]  # Layer 3
-        self.encoder5 = self.base_layers[7]  # Layer 4
+        self.in_channels = 3
+        self.out_channels = 1
 
-        # Decoder layers
-        self.decoder4 = self.conv_block(2048, 1024)
-        self.decoder3 = self.conv_block(1024, 512)
-        self.decoder2 = self.conv_block(512, 256)
-        self.decoder1 = self.conv_block(256, 64)
+        # Contraction path
+        self.conv1 = nn.Conv2d(self.in_channels, 16, kernel_size=3, padding = 1)
+        self.conv1_bis = nn.Conv2d(16, 16, kernel_size=3, padding = 1)
+        self.conv2 = nn.Conv2d(16, 32, kernel_size=3, padding = 1)
+        self.conv2_bis = nn.Conv2d(32, 32, kernel_size=3, padding = 1)
+        self.conv3 = nn.Conv2d(32, 64, kernel_size=3, padding = 1)
+        self.conv3_bis = nn.Conv2d(64, 64, kernel_size=3, padding = 1)
 
-        # Final classifier
-        self.final_conv = nn.Conv2d(64, 1, kernel_size=1)
 
-    def conv_block(self, in_channels, out_channels):
-        block = nn.Sequential(
-            nn.Conv2d(in_channels, out_channels, kernel_size=3, padding=1),
-            nn.ReLU(inplace=True),
-            nn.Conv2d(out_channels, out_channels, kernel_size=3, padding=1),
-            nn.ReLU(inplace=True),
-            nn.ConvTranspose2d(out_channels, out_channels, kernel_size=2, stride=2, padding=0, output_padding=0)  # Adjusted
-        )
-        return block
+
+        # Expansive path
+
+        self.upconv8 = nn.ConvTranspose2d(64, 32, kernel_size=2, stride=2)
+        self.conv8 = nn.Conv2d(64, 32, kernel_size=3, padding = 1)
+        self.conv8_bis = nn.Conv2d(32, 32, kernel_size=3, padding =1)
+        self.upconv9 = nn.ConvTranspose2d(32, 16, kernel_size=2, stride=2)
+        self.conv9 = nn.Conv2d(32, 16, kernel_size=3, padding = 1)
+        self.conv9_bis = nn.Conv2d(16, 16, kernel_size=3, padding =1)
+        self.conv10 = nn.Conv2d(16, self.out_channels, kernel_size=3, padding = 1)
+
+        self.pool = nn.MaxPool2d(2, 2)
+        self.relu = nn.ReLU()
+        self.dropout_1 = nn.Dropout2d(p=0.1)
+        self.dropout_2 = nn.Dropout2d(p=0.2)
+        self.dropout_3 = nn.Dropout2d(p=0.3)
 
     def forward(self, x):
-        # Encoder
-        enc1 = self.encoder1(x)
-        enc2 = self.encoder2(enc1)
-        enc3 = self.encoder3(enc2)
-        enc4 = self.encoder4(enc3)
-        enc5 = self.encoder5(enc4)
+        # Contraction path
+        c1 = self.conv1(x).relu()
+        c1 = self.dropout_1(c1)
+        c1 = self.conv1_bis(c1).relu()
+        
+        p1 = self.pool(c1)
+        c2 = self.conv2(p1).relu()
+        c2 = self.dropout_1(c2)
+        c2 = self.conv2_bis(c2).relu()
+        
+        p2 = self.pool(c2)
 
-        # Decoder with skip connections
-        dec4 = self.decoder4(enc5)
-        dec4 = F.interpolate(dec4, size=enc4.size()[2:], mode='bilinear', align_corners=False)
-        dec4 = dec4 + enc4  # Now add after resizing
+        c3 = self.conv3(p2).relu()
+        c3 = self.dropout_2(c3)
+        c3 = self.conv3_bis(c3).relu()
+        
 
-        dec3 = self.decoder3(dec4)
-        dec3 = F.interpolate(dec3, size=enc3.size()[2:], mode='bilinear', align_corners=False)
-        dec3 = dec3 + enc3  # Resize then add
+        # Expansive path
+ 
+        up8 = self.upconv8(c3)
+        up8 = torch.cat([up8, c2], dim=1)
+        c8 = self.conv8(up8).relu()
+        c8 = self.dropout_1(c8)
+        c8 = self.conv8_bis(c8).relu()
+        
 
-        dec2 = self.decoder2(dec3)
-        dec2 = F.interpolate(dec2, size=enc2.size()[2:], mode='bilinear', align_corners=False)
-        dec2 = dec2 + enc2  # Resize then add
+        up9 = self.upconv9(c8)
+        up9 = torch.cat([up9, c1], dim=1)
+        c9 = self.conv9(up9).relu()
+        c9 = self.dropout_1(c9)
+        c9 = self.conv9_bis(c9).relu()
+        
 
-        dec1 = self.decoder1(dec2)
-        dec1 = F.interpolate(dec1, size=enc1.size()[2:], mode='bilinear', align_corners=False)
-        dec1 = dec1 + enc1  # Resize then add
+        outputs = torch.sigmoid(self.conv10(c9))
+        return outputs
 
-        # Final classification layer
-        out = self.final_conv(dec1)
-        # Upsample back to the input size
-        out = F.interpolate(out, size=(36, 36), mode='bilinear', align_corners=False)
-        return torch.sigmoid(out)
-    
-                
+
+
+
 def get_model(model_name, backbone_name, fpn=False, backbone_pretrained=True):
     if model_name == 'first_model':
         model = BinarySegmentationModel(fpn=fpn, backbone_name=backbone_name, backbone_pretrained=backbone_pretrained)
@@ -322,4 +328,6 @@ def get_model(model_name, backbone_name, fpn=False, backbone_pretrained=True):
         model = SegmentationCNN()
     elif model_name == 'baseline_cnn':
         model = baseline_CNN()
+    elif model_name == 'jacard_unet':
+        model = Jacard_UNet()
     return model

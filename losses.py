@@ -3,14 +3,14 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 class SoftIoULoss(nn.Module):
-    def __init__(self, smooth=1e-6):
+    def __init__(self, smooth=1):
         super(SoftIoULoss, self).__init__()
         self.smooth = smooth
 
     def forward(self, preds, targets):
         # Flatten the tensors to make the calculation easier
-        preds_flat = preds.view(-1)
-        targets_flat = targets.view(-1)
+        preds_flat = torch.mean(preds,dim=1).view(-1)
+        targets_flat = torch.mean(targets,dim=1).view(-1)
 
         # Calculate intersection and union areas
         intersection = torch.sum(preds_flat * targets_flat)
@@ -21,7 +21,9 @@ class SoftIoULoss(nn.Module):
         IoU = (intersection + self.smooth) / (union + self.smooth)
 
         # Return the IoU loss
-        return 1 - IoU  # Subtracting from 1 to make it a loss (lower is better)
+        return - IoU  # Subtracting from 1 to make it a loss (lower is better)
+    
+
     
 class FocalLoss(nn.Module):
     def __init__(self, gamma=0, alpha=None, mean=True):

@@ -135,7 +135,7 @@ def main(args):
         for image, _, _ in test_loader:  # Ignore the masks in the test loader
             if args.model_need_GRAY:
                 image = torch.mean(image, dim=1, keepdim=True)
-
+            
             image = image.to(device)
             output = model(image).detach()
             preds = output > args.threshold  # Apply threshold to get binary predictions
