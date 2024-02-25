@@ -14,6 +14,8 @@ import numpy as np
 import os
 import datetime
 from datetime import datetime
+from skimage.segmentation import random_walker
+
 
 
 def main(args):
@@ -50,7 +52,7 @@ def main(args):
     
     corro_seg = CorroSeg('data', 'y_train.csv', shuffle = True,
                  batch_size = args.batch_size, valid_ratio = args.valid_ratio, transform_img=transform_img,  
-                 transform_test=None, test_params={'batch_size': args.batch_size, 'shuffle': False})
+                 transform_test=None, test_params={'batch_size': 1, 'shuffle': False})
     train_loader, val_loader, test_loader = corro_seg.get_loaders()
     print("Data loaded")
     # print("Number of training images: ", len(train_loader.dataset))
@@ -122,9 +124,11 @@ def main(args):
                 # Apply threshold to get binary predictions
                 preds = (outputs - args.threshold).round()
                 val_iou += iou_score(preds, mask).item() * image.size(0)
-        
+          
+        print('Example of outputs',outputs[0,0,0,:10])
         val_loss /= len(val_loader.dataset)
         val_iou /= len(val_loader.dataset)
+        
         
         # Logging to Weights and Biases
         if(args.wandb):
@@ -132,7 +136,7 @@ def main(args):
                     'Validation Loss': val_loss, 'Validation IoU': val_iou}, step=epoch)
         
         print(f'Epoch {epoch+1}/{args.num_epochs}, Train Loss: {train_loss:.4f}, Train IoU: {train_iou:.4f}, Validation Loss: {val_loss:.4f}, Validation IoU: {val_iou:.4f}')
-        
+            
     # Testing phase
     model.eval()
     predicted_masks = []  # List to store predicted masks
@@ -143,30 +147,51 @@ def main(args):
             
             image = image.to(device)
             output = model(image).detach()
-            preds = output > args.threshold  # Apply threshold to get binary predictions
-            preds = preds.int()
+            if not args.random_walk:
+                preds = output > args.threshold  # Apply threshold to get binary predictions
+                preds = preds.int()
 
-            # Check the unique values and values less than -100
-            unique_values = torch.unique(image)
-            # if len(unique_values) < 10 or torch.any(image < -100):
-            if torch.any(image < -100):
-                preds = torch.zeros_like(preds).int()  # Reset preds to zeros if conditions are met
+                # Check the unique values and values less than -100
+                unique_values = torch.unique(image)
+                # if len(unique_values) < 10 or torch.any(image < -100):
+                if torch.any(image < -100):
+                    preds = torch.zeros_like(preds).int()  # Reset preds to zeros if conditions are met
 
-            # Ensure consistent shape for all flattened masks
-            flattened_mask = preds.cpu().numpy().reshape(-1, 36*36)  # Explicitly specify the flattened shape
-            predicted_masks.extend(flattened_mask)
-
+                # Ensure consistent shape for all flattened masks
+                flattened_mask = preds.cpu().numpy().reshape(-1, 36*36)  # Explicitly specify the flattened shape
+                predicted_masks.extend(flattened_mask)
+            else:
+                output = torch.mean(output,dim=1).squeeze(0)
+                # print('Output mean',torch.mean(output))
+                # print('Output first values',output[:10,0])
+                preds_background = output < 0.3
+                preds_corrosion = output > 0.7
+                if not np.any(preds_corrosion.cpu().numpy()) or not np.any(preds_background.cpu().numpy()):
+                    labels  = np.zeros(output.shape)
+                else: 
+                    markers = np.zeros(output.shape)
+                    markers[preds_background.cpu().numpy()] = 1
+                    markers[preds_corrosion.cpu().numpy()] = 2
+                    image = torch.mean(image,dim=1).squeeze(0)
+                    image = (image.cpu().numpy() - np.min(image.cpu().numpy()))*255/(np.max(image.cpu().numpy()) - np.min(image.cpu().numpy()))
+                    labels = random_walker(image, markers, beta=1, mode='bf')
+                    
+                    labels = labels - 1
+                predicted_masks.append(labels.flatten())
+                # print(predicted_masks)
+                
     # Save predicted masks to a CSV file
     predicted_masks = np.vstack(predicted_masks)  # Stack the list of arrays into a single 2D array
+    
     df = pd.DataFrame(predicted_masks)
-
+    # print(df)
     files = [f.replace('.npy','') for f in os.listdir('data/processed/images_test')]
     df.index = files
-
+    
     prediction_path = "data/predictions/submission_" + args.experiment_name + '.csv'
     df.to_csv(prediction_path, index=True)
 
-    print("Predicted masks saved to predicted_masks.csv")
+    print("Predicted masks saved to submission_"+args.experiment_name+".csv")
 
 
 if __name__ == "__main__":
@@ -212,6 +237,7 @@ if __name__ == "__main__":
     parser.add_argument('--pretrained',action="store_true", help="Whether to use a pretrained model or not")
     parser.add_argument('--scheduler',action="store_true", help="Whether to use a scheduler or not")
     parser.add_argument('--dropout',action="store_true", help="Whether to use a dropout or not")
+    parser.add_argument('--random_walk',action="store_true", help="Whether to use a random walk or not")
 
     args = parser.parse_args()
     main(args)
