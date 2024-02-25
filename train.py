@@ -66,7 +66,7 @@ def main(args):
         criterion = FocalLoss(args.gamma,args.alpha)
     optimizer = torch.optim.Adam(model.parameters(), lr=args.learning_rate, weight_decay=args.weight_decay)
     if args.scheduler:  
-        scheduler = torch.optim.lr_scheduler.CosineAnnealingWarmRestarts(optimizer, 5)
+        scheduler = torch.optim.lr_scheduler.CosineAnnealingWarmRestarts(optimizer, 5, eta_min=1e-5)
 
     for epoch in tqdm(range(args.num_epochs)):
         # Defreezing strategy
