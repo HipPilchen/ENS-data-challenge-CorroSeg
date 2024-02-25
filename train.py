@@ -36,7 +36,7 @@ def main(args):
         }
         
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-    model = get_model(model_name=args.model_name, backbone_name=args.backbone, backbone_pretrained=args.pretrained).to(device)
+    model = get_model(model_name=args.model_name, backbone_name=args.backbone, backbone_pretrained=args.pretrained, dropout = args.dropout).to(device)
     
 
     # Possible transforms: transforms.RandomHorizontalFlip(), transforms.RandomVerticalFlip(), t
@@ -65,7 +65,8 @@ def main(args):
     elif args.criterion == 'focal':
         criterion = FocalLoss(args.gamma,args.alpha)
     optimizer = torch.optim.Adam(model.parameters(), lr=args.learning_rate, weight_decay=args.weight_decay)
-
+    if args.scheduler:  
+        scheduler = torch.optim.lr_scheduler.CosineAnnealingWarmRestarts(optimizer, 5)
 
     for epoch in tqdm(range(args.num_epochs)):
         # Defreezing strategy
@@ -94,6 +95,10 @@ def main(args):
             # Apply threshold to get binary predictions
             preds = (outputs - args.threshold).round()
             train_iou += iou_score(preds, mask).item() * image.size(0)
+
+
+        if args.scheduler:
+            scheduler.step(epoch)
         
         train_loss /= len(train_loader.dataset)
         train_iou /= len(train_loader.dataset)
@@ -205,6 +210,8 @@ if __name__ == "__main__":
     parser.add_argument('-alpha',type=float, default = 15, help = 'Alpha for focal loss')
     parser.add_argument('--model_need_GRAY',action="store_true", help = 'Whether to tile in 3 channels or not, by default RGB 3 channels')
     parser.add_argument('--pretrained',action="store_true", help="Whether to use a pretrained model or not")
+    parser.add_argument('--scheduler',action="store_true", help="Whether to use a scheduler or not")
+    parser.add_argument('--dropout',action="store_true", help="Whether to use a dropout or not")
 
     args = parser.parse_args()
     main(args)

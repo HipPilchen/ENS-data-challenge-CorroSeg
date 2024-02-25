@@ -19,7 +19,7 @@ The main objective of this project is to develop a system for segmenting defects
 
 We can be reached at the following email address: forename.name@polytechnique.edu
 
-
+À FAIRE LEARNING INSTABLE QUAND PAS PRETRAINED PEUT ETRE POST PROCESSING AVEC RANDOM WALK
 
 ## Acknowledgments
 
