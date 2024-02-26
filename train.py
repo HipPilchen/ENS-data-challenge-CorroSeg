@@ -69,7 +69,10 @@ def main(args):
     optimizer = torch.optim.Adam(model.parameters(), lr=args.learning_rate, weight_decay=args.weight_decay)
     if args.scheduler:  
         scheduler = torch.optim.lr_scheduler.CosineAnnealingWarmRestarts(optimizer, 5, eta_min=1e-5)
-
+        
+    max_val_loss = 0.0
+    early_stop_count = 0
+        
     for epoch in tqdm(range(args.num_epochs)):
         # Defreezing strategy
         if args.defreezing_strategy and (epoch % args.unfreeze_at_epoch == 0):
@@ -80,7 +83,7 @@ def main(args):
         model.train()
         train_loss = 0.0
         train_iou = 0.0
-        
+
         for image, mask, well in tqdm(train_loader):
             if args.model_need_GRAY:
                 image = torch.mean(image, dim=1, keepdim=True)
@@ -129,6 +132,14 @@ def main(args):
         val_loss /= len(val_loader.dataset)
         val_iou /= len(val_loader.dataset)
         
+        max_val_loss = max(max_val_loss, np.abs(val_loss))
+        
+        # If val loss doesn't improve for 5 epochs, stop training
+        if np.abs(val_loss) < max_val_loss:
+            early_stop_count += 1
+        if early_stop_count > args.early_stopping:
+            print("Early stopping")
+            break
         
         # Logging to Weights and Biases
         if(args.wandb):
@@ -238,6 +249,7 @@ if __name__ == "__main__":
     parser.add_argument('--scheduler',action="store_true", help="Whether to use a scheduler or not")
     parser.add_argument('--dropout',action="store_true", help="Whether to use a dropout or not")
     parser.add_argument('--random_walk',action="store_true", help="Whether to use a random walk or not")
+    parser.add_argument('--early_stopping', default=5, type=int, help="Number of epochs to wait before early stopping")
 
     args = parser.parse_args()
     main(args)
