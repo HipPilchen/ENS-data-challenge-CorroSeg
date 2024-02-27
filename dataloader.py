@@ -26,11 +26,11 @@ class CorroSegDataset(Dataset):
         
   
         if not os.path.exists(os.path.join(self.data_dir,'processed')):
-            self.masks = pd.read_csv(os.path.join(self.data_dir,'raw','y_train.csv'))
+            self.masks = pd.read_csv(os.path.join(self.data_dir,'raw','y_train.csv'),index_col=0)
             self.process()
 
         else:
-            self.masks = pd.read_csv(os.path.join(self.data_dir,'processed','y_train.csv'))
+            self.masks = pd.read_csv(os.path.join(self.data_dir,'processed','y_train.csv'), index_col=0)
      
     @property
     def raw_dir(self) -> str:
@@ -90,30 +90,21 @@ class CorroSegDataset(Dataset):
     def process_csv(self, taken_img_names):
         
         df_masks = self.masks.copy()
-        
-        # Well 1 to remove and well 0 to rename to 1
-        characters = 'well_1_'
 
-        # Find indices of strings containing the character
-        indices = [i for (i, s) in enumerate(df_masks['Unnamed: 0'].values) if characters in s]
-        
-        df_masks.drop(indices,axis = 0, inplace = True)
-        
-        rename_dict = {}
-        
-        old_characters = 'well_0_'
-        old_indices = [i for (i, s) in enumerate(df_masks['Unnamed: 0'].values) if old_characters in s]
-        
-        for i in old_indices:
-            img_name = df_masks['Unnamed: 0'].loc[i]
-            rename_dict[img_name] = img_name.replace('well_0_', 'well_1_')
-           
-        df_masks['Unnamed: 0'] = df_masks['Unnamed: 0'].replace(rename_dict)
-        
-
-        df_masks_filtered = df_masks.loc[df_masks['Unnamed: 0'].isin(taken_img_names)]
-     
-        df_masks_filtered.to_csv(self.processed_dir + 'y_train.csv', index=False)
+        patches_to_remove = ['well_0_patch_%s'%i for i in range(0,165+1)] + ['well_1_patch_%s'%i for i in range(0,450)]
+        df_masks = df_masks.drop(patches_to_remove)
+        new_indexs = []
+        for img_name in df_masks.index:
+            if 'well_1_patch_' in img_name:
+                number = img_name.replace('well_1_patch_', '')
+                new_number = int(number) - 450
+                new_indexs.append('well_1_patch_%s'%new_number)
+            else:
+                new_indexs.append(img_name)
+        print(new_indexs)
+        df_masks.index = new_indexs
+        df_masks_filtered = df_masks.loc[df_masks.index.isin(taken_img_names)]
+        df_masks_filtered.to_csv(self.processed_dir + 'y_train.csv', index=True)
         self.masks = df_masks_filtered
 
     def process_img(self,img):
@@ -140,7 +131,7 @@ class CorroSegDataset(Dataset):
             idx = idx.tolist()
             
         if not self.test:
-            img_name = self.masks['Unnamed: 0'].iloc[idx]
+            img_name = self.masks.index[idx]
             img_path = os.path.join(self.processed_dir,'images_train',img_name+'.npy')
             image = torch.load(img_path).numpy()
      
@@ -177,34 +168,6 @@ class CorroSegDataset(Dataset):
             mask_tensor = self.transform_img(torch.Tensor(mask))
 
         return image_tensor, mask_tensor, torch.Tensor([well])    
-            
-        # if not self.test:
-        #     img_name = self.masks['Unnamed: 0'].iloc[idx]
-        #     img_path = os.path.join(self.processed_dir,'images_train',img_name+'.npy')
-        #     image = torch.load(img_path).numpy()
-        #     well = int(img_name[5:7].replace('_', ''))
-            
-        #     mask = self.masks.drop(('Unnamed: 0'), axis = 1).iloc[idx].values
-
-        # else:
-        #     file_names = os.listdir(os.path.join(self.processed_dir,'images_test'))
-        #     img_path = os.path.join(self.processed_dir,'images_test', file_names[idx])
-        #     well = int(file_names[idx][5:7].replace('_', ''))
-        #     image = torch.load(img_path).numpy()
-
-
-        # if self.transform_img:
-        #     image = self.transform_img(torch.Tensor(image))
-            
-        # if self.transform_mask:
-        #     mask = self.transform_mask(torch.Tensor(mask))
-            
-            
-        # if self.test:
-        #     return torch.Tensor(image) , torch.Tensor(well)
-        # else:
-
-        #     return torch.Tensor(image), torch.Tensor(mask), torch.Tensor(well)
 
 
 class CorroSeg():

@@ -176,7 +176,7 @@ def main(args):
                 # print('Output mean',torch.mean(output))
                 # print('Output first values',output[:10,0])
                 preds_background = output < 0.3
-                preds_corrosion = output > 0.7
+                preds_corrosion = output > 0.5
                 if not np.any(preds_corrosion.cpu().numpy()) or not np.any(preds_background.cpu().numpy()):
                     labels  = np.zeros(output.shape)
                 else: 
