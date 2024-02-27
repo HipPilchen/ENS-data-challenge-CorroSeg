@@ -154,12 +154,13 @@ class CorroSegDataset(Dataset):
         image = np.tile(image, (3, 1, 1))
         mask= np.tile(mask, (3, 1, 1))
         mask = mask.reshape(3, 36, 36)
+    
 
         random_states = [np.random.randint(0,100), np.random.randint(0,100)]
         
         if self.transform_img is None:
             image_tensor = torch.Tensor(image) 
-            mask_tensor = torch.Tensor(image) 
+            mask_tensor = torch.Tensor(mask)     
         elif isinstance(self.transform_img,RollTransform):    
             image_tensor = self.transform_img(torch.Tensor(image), random_states)
             mask_tensor = self.transform_img(torch.Tensor(mask), random_states)
