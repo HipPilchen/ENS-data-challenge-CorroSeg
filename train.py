@@ -70,7 +70,7 @@ def main(args):
     if args.scheduler:  
         scheduler = torch.optim.lr_scheduler.CosineAnnealingWarmRestarts(optimizer, 5, eta_min=1e-5)
         
-    max_val_loss = 0.0
+    min_val_loss = 0.0
     early_stop_count = 0
         
     for epoch in tqdm(range(args.num_epochs)):
@@ -132,10 +132,10 @@ def main(args):
         val_loss /= len(val_loader.dataset)
         val_iou /= len(val_loader.dataset)
         
-        max_val_loss = max(max_val_loss, np.abs(val_loss))
+        min_val_loss = min(min_val_loss, val_loss)
         
         # If val loss doesn't improve for 5 epochs, stop training
-        if np.abs(val_loss) < max_val_loss:
+        if val_loss > min_val_loss:
             early_stop_count += 1
         if early_stop_count > args.early_stopping:
             print("Early stopping")

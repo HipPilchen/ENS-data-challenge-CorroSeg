@@ -137,7 +137,7 @@ class CorroSegDataset(Dataset):
      
             well = int(img_name[5:7].replace('_', ''))
             
-            mask = self.masks.drop(('Unnamed: 0'), axis = 1).iloc[idx].values
+            mask = self.masks.iloc[idx].values
 
         else:
             file_names = os.listdir(os.path.join(self.processed_dir,'images_test'))
