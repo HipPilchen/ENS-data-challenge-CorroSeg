@@ -203,55 +203,58 @@ def main(args):
     df.to_csv(prediction_path, index=True)
 
     print("Predicted masks saved to submission_"+args.experiment_name+".csv")
-
+    
+"""Parser arguments
+"""
+def parser_args(parser):
+        parser.add_argument(
+        "--wandb", action="store_true", default=False,
+        help="Whether to log metrics to Weights & Biases"
+        )
+        parser.add_argument(
+            "--experiment_name", type=str, default=None,
+            help="Name of the current experiment. Used for wandb logging"
+        )
+        parser.add_argument('-output_dir', default='wandb', type=str)
+        parser.add_argument(
+            "--wandb_id", type=str, default=None,
+            help="ID of a previous run to be resumed"
+        )
+        parser.add_argument(
+            "--wandb_entity", type=str, default=None,
+            help="wandb username or team name to which runs are attributed"
+        )
+        parser.add_argument('-n', '--num-epochs', default=5, type=int,
+                            help="number of epochs to run")
+        parser.add_argument('--criterion', default='bce', type=str)
+        parser.add_argument('-bs','--batch-size', default=64, type=int)
+        parser.add_argument('--valid-ratio', default=0.1, type=int)
+        parser.add_argument('--model-name', default='cnn', type=str)
+        parser.add_argument('--backbone', default='efficientnet-v2-m', type=str)
+        parser.add_argument('-lr', '--learning-rate', default=2e-5, type=float,
+                            help="learning rate for Adam optimizer")
+        parser.add_argument('-eps', '--threshold', default=0.5, type=float,
+                            help="Threshold for binary classification")
+        parser.add_argument('--defreezing-strategy', action="store_true", default=False)
+        parser.add_argument('-unfreeze_at_epoch', default=0, type=int, 
+                            help="Epoch to start unfreezing")
+        parser.add_argument('-layers_to_unfreeze_each_time', default=100, type=int,
+                            help="Number of layers to unfreeze")
+        parser.add_argument('-wd','--weight-decay',type=float, default = 0.01, help = 'Weight decay')
+        parser.add_argument('-gamma',type=float, default = 3, help = 'Gamma for focal loss')
+        parser.add_argument('-alpha',type=float, default = 15, help = 'Alpha for focal loss')
+        parser.add_argument('--model_need_GRAY',action="store_true", help = 'Whether to tile in 3 channels or not, by default RGB 3 channels')
+        parser.add_argument('--pretrained',action="store_true", help="Whether to use a pretrained model or not")
+        parser.add_argument('--scheduler',action="store_true", help="Whether to use a scheduler or not")
+        parser.add_argument('--dropout',action="store_true", help="Whether to use a dropout or not")
+        parser.add_argument('--random_walk',action="store_true", help="Whether to use a random walk or not")
+        parser.add_argument('--early_stopping', default=5, type=int, help="Number of epochs to wait before early stopping")
 
 if __name__ == "__main__":
     
-    parser = argparse.ArgumentParser()  
-    parser.add_argument(
-        "--wandb", action="store_true", default=False,
-        help="Whether to log metrics to Weights & Biases"
-    )
-    parser.add_argument(
-        "--experiment_name", type=str, default=None,
-        help="Name of the current experiment. Used for wandb logging"
-    )
-    parser.add_argument('-output_dir', default='wandb', type=str)
-    parser.add_argument(
-        "--wandb_id", type=str, default=None,
-        help="ID of a previous run to be resumed"
-    )
-    parser.add_argument(
-        "--wandb_entity", type=str, default=None,
-        help="wandb username or team name to which runs are attributed"
-    )
-    parser.add_argument('-n', '--num-epochs', default=5, type=int,
-                        help="number of epochs to run")
-    parser.add_argument('--criterion', default='bce', type=str)
-    parser.add_argument('-bs','--batch-size', default=64, type=int)
-    parser.add_argument('--valid-ratio', default=0.1, type=int)
-    parser.add_argument('--model-name', default='cnn', type=str)
-    parser.add_argument('--backbone', default='efficientnet-v2-m', type=str)
-    parser.add_argument('-lr', '--learning-rate', default=2e-5, type=float,
-                        help="learning rate for Adam optimizer")
-    parser.add_argument('-eps', '--threshold', default=0.5, type=float,
-                        help="Threshold for binary classification")
-    parser.add_argument('--defreezing-strategy', action="store_true", default=False)
-    parser.add_argument('-unfreeze_at_epoch', default=0, type=int, 
-                        help="Epoch to start unfreezing")
-    parser.add_argument('-layers_to_unfreeze_each_time', default=100, type=int,
-                        help="Number of layers to unfreeze")
-    parser.add_argument('-wd','--weight-decay',type=float, default = 0.01, help = 'Weight decay')
-    parser.add_argument('-gamma',type=float, default = 3, help = 'Gamma for focal loss')
-    parser.add_argument('-alpha',type=float, default = 15, help = 'Alpha for focal loss')
-    parser.add_argument('--model_need_GRAY',action="store_true", help = 'Whether to tile in 3 channels or not, by default RGB 3 channels')
-    parser.add_argument('--pretrained',action="store_true", help="Whether to use a pretrained model or not")
-    parser.add_argument('--scheduler',action="store_true", help="Whether to use a scheduler or not")
-    parser.add_argument('--dropout',action="store_true", help="Whether to use a dropout or not")
-    parser.add_argument('--random_walk',action="store_true", help="Whether to use a random walk or not")
-    parser.add_argument('--early_stopping', default=5, type=int, help="Number of epochs to wait before early stopping")
-
-    args = parser.parse_args()
+    parser = argparse.ArgumentParser()
+    parser = parser_args(parser) 
+    args = parser.parse_args()  
     main(args)
     
 # python3 train.py --wandb --wandb_entity lucasgascon --batch-size 128 --num-epochs 100 --model-name unet --backbone --experiment_name
