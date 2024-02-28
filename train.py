@@ -44,6 +44,12 @@ def main(args):
             'Number transforms':args.n_transforms, 
             })
         
+        wandb.config = {
+            "architecture":args.model_name,
+            "epochs":args.num_epochs,
+            "learning_rate":args.learning_rate,
+        }
+        
         
 
         
@@ -214,6 +220,8 @@ def main(args):
     df.to_csv(prediction_path, index=True)
 
     print("Predicted masks saved to submission_"+args.experiment_name+".csv")
+    if args.wandb:
+        wandb.finish()
     
 """Parser arguments
 """
