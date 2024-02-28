@@ -119,7 +119,7 @@ class baseline_CNN(nn.Module):
 
                 
 class UNet(nn.Module):
-    def __init__(self, pretrained=True, dropout = False):
+    def __init__(self, pretrained=True, dropout = False, pdrop = None):
         super(UNet, self).__init__()
         # Load a pretrained ResNet and use it as the encoder
         self.base_model = models.resnet50(pretrained=pretrained)
@@ -140,8 +140,13 @@ class UNet(nn.Module):
         # Final classifier
         self.final_conv = nn.Conv2d(64, 1, kernel_size=1)
         self.dropout = dropout
-        self.dropout_1 = nn.Dropout2d(p=0.1)
-        self.dropout_2 = nn.Dropout2d(p=0.2)
+        if pdrop is None:
+            self.dropout_1 = nn.Dropout2d(p=0.1)
+            self.dropout_2 = nn.Dropout2d(p=0.2)
+        else:
+            self.dropout_1 = nn.Dropout2d(p = pdrop)
+            self.dropout_2 = nn.Dropout2d(p = pdrop + 0.1)
+
 
     def conv_block(self, in_channels, out_channels):
         block = nn.Sequential(
@@ -338,11 +343,11 @@ class Jacard_UNet(nn.Module):
 
 
 
-def get_model(model_name, backbone_name, fpn=False, backbone_pretrained=True, dropout = False):
+def get_model(model_name, backbone_name, fpn=False, backbone_pretrained=True, dropout = False, pdrop = None):
     if model_name == 'first_model':
         model = BinarySegmentationModel(fpn=fpn, backbone_name=backbone_name, backbone_pretrained=backbone_pretrained)
     elif model_name == 'unet':
-        model = UNet(pretrained = backbone_pretrained, dropout = dropout)
+        model = UNet(pretrained = backbone_pretrained, dropout = dropout, pdrop = pdrop)
     elif model_name == 'cnn':
         model = SegmentationCNN()
     elif model_name == 'baseline_cnn':

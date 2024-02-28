@@ -29,24 +29,35 @@ def main(args):
             id=args.wandb_id,
             entity=args.wandb_entity,
             project="corroseg",
-        )
-        
-        wandb.config = {
+            config={
             "architecture":args.model_name,
-            "epochs":args.num_epochs,
             "learning_rate":args.learning_rate,
-        }
+            "batch_size":args.batch_size,
+            "dropout":args.dropout,
+            "p_dropout":args.p_dropout,
+            "pretrained":args.pretrained,
+            "backbone":args.backbone,
+            "loss":args.criterion,
+            "threshold":args.threshold,
+            "alpha":args.alpha,
+            "gamma":args.gamma,
+            'Number transforms':args.n_transforms, 
+            })
+        
+        
+
         
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-    model = get_model(model_name=args.model_name, backbone_name=args.backbone, backbone_pretrained=args.pretrained, dropout = args.dropout).to(device)
+    model = get_model(model_name=args.model_name, backbone_name=args.backbone, 
+                      backbone_pretrained=args.pretrained, dropout = args.dropout, pdrop = args.p_dropout).to(device)
     
 
     # Possible transforms: transforms.RandomHorizontalFlip(), transforms.RandomVerticalFlip(), t
-        
-    transform_img = [None,
+    all_transforms = [None,
         transforms.RandomHorizontalFlip(1),
         transforms.RandomVerticalFlip(1),RollTransform(),
         transforms.Compose([transforms.RandomVerticalFlip(1),transforms.RandomHorizontalFlip(1)]),]
+    transform_img = all_transforms[:args.n_transforms]
 
  
     
@@ -215,7 +226,6 @@ def parser_args(parser):
             "--experiment_name", type=str, default=None,
             help="Name of the current experiment. Used for wandb logging"
         )
-        parser.add_argument('-output_dir', default='wandb', type=str)
         parser.add_argument(
             "--wandb_id", type=str, default=None,
             help="ID of a previous run to be resumed"
@@ -241,14 +251,17 @@ def parser_args(parser):
         parser.add_argument('-layers_to_unfreeze_each_time', default=100, type=int,
                             help="Number of layers to unfreeze")
         parser.add_argument('-wd','--weight-decay',type=float, default = 0.01, help = 'Weight decay')
-        parser.add_argument('-gamma',type=float, default = 3, help = 'Gamma for focal loss')
-        parser.add_argument('-alpha',type=float, default = 15, help = 'Alpha for focal loss')
+        parser.add_argument('--gamma',type=float, default = 3, help = 'Gamma for focal loss')
+        parser.add_argument('--alpha',type=float, default = 15, help = 'Alpha for focal loss')
         parser.add_argument('--model_need_GRAY',action="store_true", help = 'Whether to tile in 3 channels or not, by default RGB 3 channels')
         parser.add_argument('--pretrained',action="store_true", help="Whether to use a pretrained model or not")
         parser.add_argument('--scheduler',action="store_true", help="Whether to use a scheduler or not")
         parser.add_argument('--dropout',action="store_true", help="Whether to use a dropout or not")
+        parser.add_argument('--p_dropout',type=float, default = None, help="Probability of dropout if None standard value is used")
         parser.add_argument('--random_walk',action="store_true", help="Whether to use a random walk or not")
         parser.add_argument('--early_stopping', default=5, type=int, help="Number of epochs to wait before early stopping")
+        parser.add_argument('--n_transforms', default=5, type=int, help="Number of transforms to use")
+        return parser
 
 if __name__ == "__main__":
     
