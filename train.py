@@ -87,8 +87,8 @@ def main(args):
     if args.scheduler:  
         scheduler = torch.optim.lr_scheduler.CosineAnnealingWarmRestarts(optimizer, 5, eta_min=1e-5)
         
-    min_val_loss = 0.0
-    early_stop_count = 0
+    best_val_loss = 10000000
+    count_loss_decrease = 0
         
     for epoch in tqdm(range(args.num_epochs)):
         # Defreezing strategy
@@ -100,7 +100,7 @@ def main(args):
         model.train()
         train_loss = 0.0
         train_iou = 0.0
-
+        iou_score_class = SoftIoULoss()
         for image, mask, well in tqdm(train_loader):
             if args.model_need_GRAY:
                 image = torch.mean(image, dim=1, keepdim=True)
@@ -116,7 +116,7 @@ def main(args):
             train_loss += loss.item() * image.size(0)
             # Apply threshold to get binary predictions
             preds = (outputs - args.threshold).round()
-            train_iou += iou_score(preds, mask).item() * image.size(0)
+            train_iou += (-iou_score_class(outputs, mask)).item() * image.size(0)
 
 
         if args.scheduler:
@@ -143,22 +143,19 @@ def main(args):
                 val_loss += loss.item() * image.size(0)
                 # Apply threshold to get binary predictions
                 preds = (outputs - args.threshold).round()
-                val_iou += iou_score(preds, mask).item() * image.size(0)
+                val_iou += (-iou_score_class(outputs, mask)).item()  * image.size(0)
           
         print('Example of outputs',outputs[0,0,0,:10])
         val_loss /= len(val_loader.dataset)
         val_iou /= len(val_loader.dataset)
-        
-        min_val_loss = min(min_val_loss, val_loss)
-        
-        # If val loss doesn't improve for 5 epochs, stop training
-        if val_loss > min_val_loss:
-            early_stop_count += 1
-        else:
-            early_stop_count = 0
-        if early_stop_count > args.early_stopping:
-            print("Early stopping")
-            break
+        best_val_loss = min(best_val_loss, val_loss)
+        if best_val_loss == val_loss:
+                    count_loss_decrease = 0        
+        else :
+            count_loss_decrease += 1
+            if count_loss_decrease == args.early_stopping:
+                print('Training stopped at %i epochs'%epoch)
+                break
         
         # Logging to Weights and Biases
         if(args.wandb):
@@ -269,7 +266,7 @@ def parser_args(parser):
         parser.add_argument('--dropout',action="store_true", help="Whether to use a dropout or not")
         parser.add_argument('--p_dropout',type=float, default = None, help="Probability of dropout if None standard value is used")
         parser.add_argument('--random_walk',action="store_true", help="Whether to use a random walk or not")
-        parser.add_argument('--early_stopping', default=5, type=int, help="Number of epochs to wait before early stopping")
+        parser.add_argument('--early_stopping', default=10, type=int, help="Number of epochs to wait before early stopping")
         parser.add_argument('--n_transforms', default=5, type=int, help="Number of transforms to use")
         return parser
 
