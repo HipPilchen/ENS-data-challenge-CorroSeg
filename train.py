@@ -154,6 +154,8 @@ def main(args):
         # If val loss doesn't improve for 5 epochs, stop training
         if val_loss > min_val_loss:
             early_stop_count += 1
+        else:
+            early_stop_count = 0
         if early_stop_count > args.early_stopping:
             print("Early stopping")
             break
