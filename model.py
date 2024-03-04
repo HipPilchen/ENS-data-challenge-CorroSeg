@@ -2,6 +2,17 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torchvision.models as models
+from torchvision.models import resnet50, ResNet50_Weights
+
+class SegModel(nn.Module):
+    def __init__(self):
+        super(SegModel, self).__init__()
+        self.model = resnet50(weights=ResNet50_Weights.DEFAULT)
+        self.model.fc = nn.Linear(2048, 1)
+        
+    def forward(self, x):
+        x = self.model(x)
+        return torch.sigmoid(x)
 
 class ResNetBackbone(nn.Module):
     def __init__(self, backbone):
@@ -354,4 +365,6 @@ def get_model(model_name, backbone_name, fpn=False, backbone_pretrained=True, dr
         model = baseline_CNN()
     elif model_name == 'jacard_unet':
         model = Jacard_UNet()
+    elif model_name == 'seg_model':
+        model = SegModel()
     return model
