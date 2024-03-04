@@ -1,6 +1,8 @@
 
-Focal loss: test various values of gamma (0 to 5)
-Focal loss: alpha parameter (normally inverse of freq of the imbalance class)
-Compare with same model the different losses
-Lr: various learning rate
-Bs: Impact of batchsize
+Focal loss: test various values of gamma (0 to 5) (done)
+Focal loss: alpha parameter (normally inverse of freq of the imbalance class) (done)
+Compare with same model the different losses (done)
+Lr: various learning rate (done)
+Bs: Impact of batchsize (done)
+
+Test different models

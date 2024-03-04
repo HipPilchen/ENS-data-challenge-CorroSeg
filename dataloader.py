@@ -73,18 +73,28 @@ class CorroSegDataset(Dataset):
         
         test_imgs = []
         test_img_names = [] 
+        test_outliers_img = []
+        test_outliers_img_names = []
         print('Processing test images')
         for img_name in tqdm(os.listdir(os.path.join(self.raw_dir,'images_test'))):
             img = np.load(os.path.join(self.data_dir,'raw/images_test',img_name))
             new_img, dropped = self.process_img(img)
-            test_imgs.append(new_img.flatten())
-            test_img_names.append(img_name)
+            if dropped:
+                test_outliers_img.append(new_img)
+                test_outliers_img_names.append(img_name)
+            else:
+                test_imgs.append(new_img.flatten())
+                test_img_names.append(img_name)
+        
         
         new_test_imgs = rbs.transform(np.array(test_imgs))
+
         
         os.mkdir(os.path.join(self.processed_dir,'images_test'))
         for img_name, new_img in zip(test_img_names, new_test_imgs):
             torch.save(torch.Tensor(new_img.reshape(36,36)),os.path.join(self.processed_dir,'images_test/')+img_name)
+        for img_name, new_img in zip(test_outliers_img_names, test_outliers_img):
+            torch.save(torch.Tensor(new_img),os.path.join(self.processed_dir,'images_test/')+img_name)
 
     
     def process_csv(self, taken_img_names):

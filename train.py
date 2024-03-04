@@ -87,7 +87,7 @@ def main(args):
     if args.scheduler:  
         scheduler = torch.optim.lr_scheduler.CosineAnnealingWarmRestarts(optimizer, 5, eta_min=1e-5)
         
-    best_val_loss = 10000000
+    best_val_loss = 1000000
     count_loss_decrease = 0
         
     for epoch in tqdm(range(args.num_epochs)):
