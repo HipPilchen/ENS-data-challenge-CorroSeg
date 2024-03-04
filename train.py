@@ -50,9 +50,6 @@ def main(args):
             "learning_rate":args.learning_rate,
         }
         
-        
-
-        
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     model = get_model(model_name=args.model_name, backbone_name=args.backbone, 
                       backbone_pretrained=args.pretrained, dropout = args.dropout, pdrop = args.p_dropout).to(device)
@@ -64,8 +61,6 @@ def main(args):
         transforms.RandomVerticalFlip(1),RollTransform(),
         transforms.Compose([transforms.RandomVerticalFlip(1),transforms.RandomHorizontalFlip(1)]),]
     transform_img = all_transforms[:args.n_transforms]
-
- 
     
     corro_seg = CorroSeg('data', 'y_train.csv', shuffle = True,
                  batch_size = args.batch_size, valid_ratio = args.valid_ratio, transform_img=transform_img,  
@@ -277,4 +272,4 @@ if __name__ == "__main__":
     args = parser.parse_args()  
     main(args)
     
-# python3 train.py --wandb --wandb_entity lucasgascon --batch-size 128 --num-epochs 100 --model-name unet --backbone --experiment_name
+# python3 train.py --wandb --wandb_entity lucasgascon --batch-size 128 --num-epochs 100 --model-name seg_model --experiment_name seg_model --criterion iou

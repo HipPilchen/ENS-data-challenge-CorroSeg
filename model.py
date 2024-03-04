@@ -2,18 +2,19 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torchvision.models as models
-from torchvision.models import resnet50, ResNet50_Weights
+from torchvision.models.segmentation import fcn_resnet50, FCN_ResNet50_Weights
 
 class SegModel(nn.Module):
     def __init__(self):
         super(SegModel, self).__init__()
-        self.model = resnet50(weights=ResNet50_Weights.DEFAULT)
-        self.model.fc = nn.Linear(2048, 1)
-        
+        self.model = fcn_resnet50(weights=FCN_ResNet50_Weights.DEFAULT)
+        self.model.classifier[4] = nn.Conv2d(512, 1, kernel_size=(1, 1), stride=(1, 1))
+        self.model.aux_classifier[4] = nn.Conv2d(256, 1, kernel_size=(1, 1), stride=(1, 1))
+    
     def forward(self, x):
-        x = self.model(x)
+        x = self.model(x)['out']
         return torch.sigmoid(x)
-
+        
 class ResNetBackbone(nn.Module):
     def __init__(self, backbone):
         super(ResNetBackbone, self).__init__()
