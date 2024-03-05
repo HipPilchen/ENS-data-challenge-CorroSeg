@@ -88,8 +88,8 @@ def main(args):
     for epoch in tqdm(range(args.num_epochs)):
         # Defreezing strategy
         if args.defreezing_strategy and (epoch % args.unfreeze_at_epoch == 0):
-            layers_to_unfreeze = (epoch // args.unfreeze_at_epoch) * args.layers_to_unfreeze_each_time
-            model.unfreeze_layers(layers_to_unfreeze)
+            blocks_to_unfreeze = epoch // args.unfreeze_at_epoch
+            model.unfreeze_blocks(blocks_to_unfreeze)
         
         # Training phase
         model.train()
@@ -247,11 +247,9 @@ def parser_args(parser):
                             help="learning rate for Adam optimizer")
         parser.add_argument('-eps', '--threshold', default=0.5, type=float,
                             help="Threshold for binary classification")
-        parser.add_argument('--defreezing-strategy', action="store_true", default=False)
-        parser.add_argument('-unfreeze_at_epoch', default=0, type=int, 
+        parser.add_argument('--defreezing-strategy', action="store_true")
+        parser.add_argument('--unfreeze-at-epoch', default=0, type=int, 
                             help="Epoch to start unfreezing")
-        parser.add_argument('-layers_to_unfreeze_each_time', default=100, type=int,
-                            help="Number of layers to unfreeze")
         parser.add_argument('-wd','--weight-decay',type=float, default = 0.01, help = 'Weight decay')
         parser.add_argument('--gamma',type=float, default = 3, help = 'Gamma for focal loss')
         parser.add_argument('--alpha',type=float, default = 15, help = 'Alpha for focal loss')
@@ -273,3 +271,5 @@ if __name__ == "__main__":
     main(args)
     
 # python3 train.py --wandb --wandb_entity lucasgascon --batch-size 128 --num-epochs 100 --model-name seg_model --experiment_name seg_model --criterion iou
+
+# python3 train.py --wandb --wandb_entity lucasgascon --batch-size 128 --num-epochs 100 --model-name unet --experiment_name unet_pretrained_unfreezed_strategy --criterion iou --pretrained --defreezing-strategy --unfreeze-at-epoch 10
