@@ -144,11 +144,6 @@ class UNet(nn.Module):
         self.encoder3 = self.base_layers[5]  # Layer 2
         self.encoder4 = self.base_layers[6]  # Layer 3
         self.encoder5 = self.base_layers[7]  # Layer 4
-        
-        # Freeze the encoder blocks
-        for encoder in [self.encoder1, self.encoder2, self.encoder3, self.encoder4, self.encoder5]:
-            for param in encoder.parameters():
-                param.requires_grad = False
 
         # Decoder layers
         self.decoder4 = self.conv_block(2048, 1024)
@@ -222,7 +217,13 @@ class UNet(nn.Module):
         out = self.final_conv(dec1)
         # Upsample back to the input size
         out = F.interpolate(out, size=(36, 36), mode='bilinear', align_corners=False)
-        return torch.sigmoid(out)      
+        return torch.sigmoid(out)
+    
+    def freeze_encoder(self):
+        # Freeze the encoder blocks
+        for encoder in [self.encoder1, self.encoder2, self.encoder3, self.encoder4, self.encoder5]:
+            for param in encoder.parameters():
+                param.requires_grad = False
     
     def unfreeze_blocks(self, num_blocks):
         encoder_blocks = [self.encoder1, self.encoder2, self.encoder3, self.encoder4, self.encoder5]

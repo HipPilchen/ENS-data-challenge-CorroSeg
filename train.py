@@ -88,6 +88,7 @@ def main(args):
     for epoch in tqdm(range(args.num_epochs)):
         # Defreezing strategy
         if args.defreezing_strategy and (epoch % args.unfreeze_at_epoch == 0):
+            model.freeze_encoder()
             blocks_to_unfreeze = epoch // args.unfreeze_at_epoch
             model.unfreeze_blocks(blocks_to_unfreeze)
         
@@ -272,4 +273,8 @@ if __name__ == "__main__":
     
 # python3 train.py --wandb --wandb_entity lucasgascon --batch-size 128 --num-epochs 100 --model-name seg_model --experiment_name seg_model --criterion iou
 
-# python3 train.py --wandb --wandb_entity lucasgascon --batch-size 128 --num-epochs 100 --model-name unet --experiment_name unet_pretrained_unfreezed_strategy --criterion iou --pretrained --defreezing-strategy --unfreeze-at-epoch 10
+# python3 train.py --wandb --wandb_entity lucasgascon --batch-size 128 --num-epochs 100 --model-name unet --criterion iou --pretrained --defreezing-strategy --unfreeze-at-epoch 10 -lr 10e-4 --weight-decay 10e-3 --n_transforms 3 --experiment_name unet_pretrained_unfreezed_strategy_iou_best_params
+
+# python3 train.py --wandb --wandb_entity lucasgascon --batch-size 128 --num-epochs 100 -lr 10e-4 --weight-decay 10e-3 --n_transforms 3 --model-name unet --criterion iou --experiment_name unet_iou_best_params
+
+# python3 train.py --wandb --wandb_entity lucasgascon --batch-size 128 --num-epochs 100 -lr 10e-4 --weight-decay 10e-3 --n_transforms 3 --model-name unet --criterion iou --experiment_name unet_iou_best_params
