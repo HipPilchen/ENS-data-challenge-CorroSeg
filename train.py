@@ -260,7 +260,7 @@ def parser_args(parser):
         parser.add_argument('--dropout',action="store_true", help="Whether to use a dropout or not")
         parser.add_argument('--p_dropout',type=float, default = None, help="Probability of dropout if None standard value is used")
         parser.add_argument('--random_walk',action="store_true", help="Whether to use a random walk or not")
-        parser.add_argument('--early_stopping', default=10, type=int, help="Number of epochs to wait before early stopping")
+        parser.add_argument('--early_stopping', default=20, type=int, help="Number of epochs to wait before early stopping")
         parser.add_argument('--n_transforms', default=5, type=int, help="Number of transforms to use")
         return parser
 

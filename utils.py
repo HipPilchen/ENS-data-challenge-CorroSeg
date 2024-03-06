@@ -80,13 +80,14 @@ class RollTransform:
 # Average the results of several models from submissions placed in a directory
 def average_submissions(dir_path = "data/predictions/averaging", new_name = "averaged_submission.csv"):
     n = len(os.listdir(dir_path))
-    pred = np.zeros((n, 1296))
+    N = len(os.listdir('data/processed/images_test'))
+    pred = np.zeros((n,N,1296))
     for i, sub_files in enumerate(os.listdir(dir_path)):
         sub = pd.read_csv(os.path.join(dir_path, sub_files), index_col = 0)
-        pred[i, :] += sub.iloc[i].values
+        pred[i,:, :] += sub.values
         
-    predictions = (pred / n)>0.5
-    predictons = predictions.int()
+    predictions = np.mean(pred,axis=0)>0.5
+    predictions = predictions.astype(int)
     df = pd.DataFrame(predictions)
 
     files = [f.replace('.npy','') for f in os.listdir('data/processed/images_test')]
@@ -95,5 +96,8 @@ def average_submissions(dir_path = "data/predictions/averaging", new_name = "ave
     df.to_csv(os.path.join(dir_path,new_name), index=True)
 
     print("Predicted averaged masks saved in predictions/averaging")
-
+    
+if __name__ == "__main__":
+    average_submissions()
+    print('Averaging done!')
 

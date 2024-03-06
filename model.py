@@ -334,8 +334,6 @@ class Jacard_UNet(nn.Module):
         self.conv3 = nn.Conv2d(32, 64, kernel_size=3, padding = 1)
         self.conv3_bis = nn.Conv2d(64, 64, kernel_size=3, padding = 1)
 
-
-
         # Expansive path
 
         self.upconv8 = nn.ConvTranspose2d(64, 32, kernel_size=2, stride=2)
