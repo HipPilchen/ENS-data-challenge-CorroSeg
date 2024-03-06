@@ -3,15 +3,15 @@
 
 ## Introduction
 
-This project is part of the "Learning and Sampling Generation by Probabilistic Sampling" course taught by Stéphane Mallat at the Collège de France. I am currently enrolled in the Master of Computer Vision and Learning (MVA) program, where this project serves as a practical application of the concepts covered in the course.
+This project is part of the "Learning and Sampling Generation by Probabilistic Sampling" course taught by Stéphane Mallat at the Collège de France. We are currently enrolled in the Master of Computer Vision and Learning (MVA) program, where this project serves as a practical application of the concepts covered in the course.
 
 ## Project Description
 
-The main objective of this project is to develop a system for segmenting defects in conduit images. Defect segmentation is a critical task in various industries, including manufacturing and infrastructure maintenance. By precisely identifying and delineating defects in images, we can facilitate timely repairs and preventive maintenance, thereby improving safety and operational efficiency.
+The main objective of this project is to develop a system for segmenting defects in conduit images. Defect segmentation is a critical task in various industries, including manufacturing and infrastructure maintenance. By precisely identifying and delineating defects in images, we can facilitate timely repairs and preventive maintenance, thereby improving safety and operational efficiency. This project is part of a data challenge organized by ENS Paris, you can check [ENS data challenge](https://challengedata.ens.fr) for further information.
 
 ## Methodology
 
-
+We have developped a U-Net architecture-like model. After many experiments, the hyperparameters and the training method has been adapted to perform an accurate segmentation of images of corroded wells. Finally, we succeed in obtaining a high IoU score on the test set. 
 ## Collaborators
 
 - Hippolyte Pilchen (MVA, ENS Paris-Saclay)
@@ -19,7 +19,6 @@ The main objective of this project is to develop a system for segmenting defects
 
 We can be reached at the following email address: forename.name@polytechnique.edu
 
-À FAIRE LEARNING INSTABLE QUAND PAS PRETRAINED PEUT ETRE POST PROCESSING AVEC RANDOM WALK
 
 ## Acknowledgments
 
