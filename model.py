@@ -166,8 +166,10 @@ class UNet(nn.Module):
     def conv_block(self, in_channels, out_channels):
         block = nn.Sequential(
             nn.Conv2d(in_channels, out_channels, kernel_size=3, padding=1),
+            nn.BatchNorm2d(out_channels),
             nn.ReLU(inplace=True),
             nn.Conv2d(out_channels, out_channels, kernel_size=3, padding=1),
+            nn.BatchNorm2d(out_channels),
             nn.ReLU(inplace=True),
             nn.ConvTranspose2d(out_channels, out_channels, kernel_size=2, stride=2, padding=0, output_padding=0)  # Adjusted
         )
@@ -190,9 +192,9 @@ class UNet(nn.Module):
 
         # Decoder with skip connections
         dec4 = self.decoder4(enc5)
-        dec4 = F.interpolate(dec4, size=enc4.size()[2:], mode='bilinear', align_corners=False)
         if self.dropout:
             dec4 = self.dropout_2(dec4)
+        dec4 = F.interpolate(dec4, size=enc4.size()[2:], mode='bilinear', align_corners=False)
         dec4 = dec4 + enc4  # Now add after resizing
         
 
@@ -200,18 +202,21 @@ class UNet(nn.Module):
         dec3 = F.interpolate(dec3, size=enc3.size()[2:], mode='bilinear', align_corners=False)
         if self.dropout:
             dec3 = self.dropout_2(dec3)
+
         dec3 = dec3 + enc3  # Resize then add
 
         dec2 = self.decoder2(dec3)
         dec2 = F.interpolate(dec2, size=enc2.size()[2:], mode='bilinear', align_corners=False)
         if self.dropout:
             dec2 = self.dropout_1(dec2)
+
         dec2 = dec2 + enc2  # Resize then add
 
         dec1 = self.decoder1(dec2)
         dec1 = F.interpolate(dec1, size=enc1.size()[2:], mode='bilinear', align_corners=False)
         if self.dropout:
             dec1 = self.dropout_1(dec1)
+
         dec1 = dec1 + enc1  # Resize then add
 
         # Final classification layer
@@ -296,9 +301,9 @@ class SegmentationCNN(nn.Module):
 
         return torch.sigmoid(out)
     
-class SegModel(nn.Module):
+class SegModel2(nn.Module):
     def __init__(self):
-        super(SegModel, self).__init__()
+        super(SegModel2, self).__init__()
         self.model = resnet50(weights=ResNet50_Weights.DEFAULT)
         self.model.fc = nn.Linear(2048, 1)
         
@@ -306,17 +311,6 @@ class SegModel(nn.Module):
         x = self.model(x)
         return torch.sigmoid(x)
 
-if __name__ == "__main__":
-    model = SegModel()
-        
-    corro_seg = CorroSeg('data', 'y_train.csv', shuffle = True,
-                 batch_size = 64, valid_ratio = 0.1, transform_img=None,  
-                 transform_test=None, test_params={'batch_size': 1, 'shuffle': False})
-    train_loader, val_loader, test_loader = corro_seg.get_loaders()
-    
-    for i, (x, y, z) in tqdm(enumerate(train_loader)):
-        pred = model(x)
-        print(pred.shape)
         
         
 class Jacard_UNet(nn.Module):
@@ -388,7 +382,131 @@ class Jacard_UNet(nn.Module):
         return outputs
 
 
+class Cat_UNet(nn.Module):
+    def __init__(self, pretrained=True, dropout = False, pdrop = None):
+        super(Cat_UNet, self).__init__()
+        # Load a pretrained ResNet and use it as the encoder
+        self.base_model = models.resnet50(pretrained=pretrained)
+        self.base_layers = list(self.base_model.children())
 
+
+        self.encoder1 = nn.Sequential(*self.base_layers[:3])  # Initial conv + bn + relu + maxpool
+        self.encoder2 = nn.Sequential(*self.base_layers[3:5])  # Layer 1
+        self.encoder3 = self.base_layers[5]  # Layer 2
+        self.encoder4 = self.base_layers[6]  # Layer 3
+        self.encoder5 = self.base_layers[7]  # Layer 4
+
+        # Decoder layers
+        self.upconv4 =  nn.ConvTranspose2d(2048, 1024, kernel_size=2, stride=2, padding=0, output_padding=0)  
+        self.decoder4 = self.conv_block_short(2048, 1024)
+        
+        self.upconv3 =  nn.ConvTranspose2d(1024, 512, kernel_size=2, stride=2, padding=0, output_padding=0) 
+        self.decoder3 = self.conv_block_short(1024, 512)
+        
+        self.upconv2 =  nn.ConvTranspose2d(512, 256, kernel_size=2, stride=2, padding=0, output_padding=0) 
+        self.decoder2 = self.conv_block_short(512, 256)
+        
+        
+        self.upconv1 =  nn.ConvTranspose2d(256, 64, kernel_size=2, stride=2, padding=0, output_padding=0) 
+        self.decoder1 = self.conv_block_short(128, 64)
+
+        # Final classifier
+        self.final_conv = nn.Conv2d(64, 1, kernel_size=1)
+        self.dropout = dropout
+        if pdrop is None:
+            self.dropout_1 = nn.Dropout2d(p=0.1)
+            self.dropout_2 = nn.Dropout2d(p=0.2)
+        else:
+            self.dropout_1 = nn.Dropout2d(p = pdrop)
+            self.dropout_2 = nn.Dropout2d(p = pdrop + 0.1)
+
+
+    def conv_block_short(self, in_channels, out_channels):
+        block = nn.Sequential(
+            nn.Conv2d(in_channels, out_channels, kernel_size=3, padding=1),
+            nn.BatchNorm2d(out_channels),
+            nn.ReLU(inplace=True),
+            nn.Conv2d(out_channels, out_channels, kernel_size=3, padding=1),
+            nn.BatchNorm2d(out_channels),
+            nn.ReLU(inplace=True),
+        )
+        return block
+
+    def forward(self, x):
+        # Encoder
+        enc1 = self.encoder1(x)
+        enc2 = self.encoder2(enc1)
+        if self.dropout:
+            enc2 = self.dropout_1(enc2)
+        enc3 = self.encoder3(enc2)
+        if self.dropout:
+            enc3 = self.dropout_1(enc3)
+        enc4 = self.encoder4(enc3)
+        if self.dropout:
+            enc4 = self.dropout_2(enc4)
+        enc5 = self.encoder5(enc4)
+      
+
+        # Decoder with skip connections
+        up4 = self.upconv4(enc5)
+        up4 = F.interpolate(up4, size=enc4.size()[2:], mode='bilinear', align_corners=False)
+        up4 = torch.cat([up4, enc4], dim = 1)
+        dec4 = self.decoder4(up4)
+        if self.dropout:
+            dec4 = self.dropout_2(dec4)
+
+
+        up3 = self.upconv3(dec4)
+        up3 = F.interpolate(up3, size=enc3.size()[2:], mode='bilinear', align_corners=False)
+        up3 = torch.cat([up3, enc3], dim = 1)
+        dec3 = self.decoder3(up3)
+        if self.dropout:
+            dec3 = self.dropout_2(dec3)
+
+        up2 = self.upconv2(dec3)
+        up2 = F.interpolate(up2, size=enc2.size()[2:], mode='bilinear', align_corners=False)
+        up2 = torch.cat([up2, enc2], dim = 1)
+        dec2 = self.decoder2(up2)
+        if self.dropout:
+            dec2 = self.dropout_1(dec2)
+
+        up1 = self.upconv1(dec2)
+        up1 = F.interpolate(up1, size=enc1.size()[2:], mode='bilinear', align_corners=False)
+        up1 = torch.cat([up1, enc1], dim = 1)
+        dec1 = self.decoder1(up1)
+        if self.dropout:
+            dec1 = self.dropout_1(dec1)
+
+        # Final classification layer
+        out = self.final_conv(dec1)
+        # Upsample back to the input size
+        out = F.interpolate(out, size=(36, 36), mode='bilinear', align_corners=False)
+        return torch.sigmoid(out)
+    
+    def freeze_encoder(self):
+        # Freeze the encoder blocks
+        for encoder in [self.encoder1, self.encoder2, self.encoder3, self.encoder4, self.encoder5]:
+            for param in encoder.parameters():
+                param.requires_grad = False
+    
+    def unfreeze_blocks(self, num_blocks):
+        encoder_blocks = [self.encoder1, self.encoder2, self.encoder3, self.encoder4, self.encoder5]
+        for block in encoder_blocks[-num_blocks:]:
+            for param in block.parameters():
+                param.requires_grad = True
+    
+
+class ConvBlock(nn.Module):
+    def __init__(self, in_channels, out_channels, kernel_size=3, padding=1):
+        super(ConvBlock, self).__init__()
+        self.conv = nn.Conv2d(in_channels, out_channels, kernel_size, padding=padding)
+        self.bn = nn.BatchNorm2d(out_channels)
+        self.relu = nn.ReLU(inplace=True)
+
+    def forward(self, x):
+        x = self.conv(x)
+        x = self.bn(x)
+        return self.relu(x)
 
 def get_model(model_name, backbone_name, fpn=False, backbone_pretrained=True, dropout = False, pdrop = None):
     if model_name == 'first_model':
@@ -403,4 +521,6 @@ def get_model(model_name, backbone_name, fpn=False, backbone_pretrained=True, dr
         model = Jacard_UNet()
     elif model_name == 'seg_model':
         model = SegModel()
+    elif model_name == 'cat_unet':
+        model = Cat_UNet()
     return model

@@ -2,7 +2,7 @@ import argparse
 import numpy as np
 from train import main as train_main
 from train import parser_args as train_parser_args
-from experiments import dict_exp, new_experiments
+from experiments import dict_exp, new_experiments, newest_exp
 import json
 
 def create_commands(wandb=True, experiment_name=None, wandb_id=None, wandb_entity=None, num_epochs=None, 
@@ -100,6 +100,7 @@ def run_exps(dico_exp):
 
     
 if __name__ == "__main__":
-    run_exps(new_experiments)
+    # run_exps(new_experiments)
+    run_exps(newest_exp)
     print("All experiments run successfully")
     

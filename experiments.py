@@ -87,6 +87,31 @@ new_experiments = {
     59:{'experiment_name': '59', 'num_epochs': 200, 'criterion': 'iou', 'batch_size': 64, 'model_name': 'first_model', 'learning_rate': 1e-4, 'weight_decay': 0.001, 'gamma': 1, 'alpha': 15, 'pretrained': False, 'dropout': True, 'p_dropout': 0.1, 'n_transforms': 4},
 }
 
+# Experiments on Unet with batchnorm and different skip connection
+newest_exp = {
+    # Add Unet with Batch Normalization same number as above
+    17:{"experiment_name": "batchnorm_17",'num_epochs':200, "criterion": "iou","batch_size": 160,"model_name": "unet","learning_rate": 1e-5,"weight_decay": 0.01,"gamma": 1,"alpha": 15,"pretrained": False,"dropout": False, "p_dropout": None},
+    18:{"experiment_name": "batchnorm_18",'num_epochs':200, "criterion": "iou","batch_size": 160,"model_name": "unet","learning_rate": 5e-5,"weight_decay": 0.01,"gamma": 1,"alpha": 15,"pretrained": False,"dropout": False, "p_dropout": None},
+    19:{"experiment_name": "batchnorm_19",'num_epochs':200, "criterion": "iou","batch_size": 160,"model_name": "unet","learning_rate": 1e-4,"weight_decay": 0.01,"gamma": 1,"alpha": 15,"pretrained": False,"dropout": False, "p_dropout": None},
+    20:{"experiment_name": "batchnorm_20",'num_epochs':200, "criterion": "iou","batch_size": 160,"model_name": "unet","learning_rate": 5e-4,"weight_decay": 0.01,"gamma": 1,"alpha": 15,"pretrained": False,"dropout": False, "p_dropout": None},
+    47:{"experiment_name": "batchnorm_47",'num_epochs':200, "criterion": "iou","batch_size": 32,"model_name": "unet","learning_rate": 1e-4,"weight_decay": 0.001,"gamma": 1,"alpha": 15,"pretrained": True,"dropout": False, "p_dropout": None, "n_transforms": 4},
+    48:{"experiment_name": "batchnorm_48",'num_epochs':200, "criterion": "iou","batch_size": 64,"model_name": "unet","learning_rate": 1e-4,"weight_decay": 0.001,"gamma": 1,"alpha": 15,"pretrained": True,"dropout": False, "p_dropout": None, "n_transforms": 4},
+    49:{"experiment_name": "batchnorm_49",'num_epochs':200, "criterion": "iou","batch_size": 128,"model_name": "unet","learning_rate": 1e-4,"weight_decay": 0.001,"gamma": 1,"alpha": 15,"pretrained": True,"dropout": False, "p_dropout": None, "n_transforms": 4},
+    # New experiments with concat skip connections
+    # Classis
+    60:{"experiment_name": "60",'num_epochs':200, "criterion": "iou","batch_size": 64,"model_name": "cat_unet","learning_rate": 1e-4,"weight_decay": 0.001,"gamma": 1,"alpha": 15,"pretrained": False,"dropout": False, "p_dropout": 0.1, "n_transforms": 4},
+    61:{"experiment_name": "61",'num_epochs':200, "criterion": "iou","batch_size": 64,"model_name": "cat_unet","learning_rate": 1e-4,"weight_decay": 0.001,"gamma": 1,"alpha": 15,"pretrained": False,"dropout": True, "p_dropout": 0.1, "n_transforms": 4},
+    # pretrained
+    61:{"experiment_name": "61",'num_epochs':200, "criterion": "iou","batch_size": 64,"model_name": "cat_unet","learning_rate": 1e-4,"weight_decay": 0.001,"gamma": 1,"alpha": 15,"pretrained": True,"dropout": False, "p_dropout": 0.1, "n_transforms": 4},
+    62:{"experiment_name": "62",'num_epochs':200, "criterion": "iou","batch_size": 64,"model_name": "cat_unet","learning_rate": 1e-4,"weight_decay": 0.001,"gamma": 1,"alpha": 15,"pretrained": True,"dropout": True, "p_dropout": 0.1, "n_transforms": 4},
+    63:{"experiment_name": "63",'num_epochs':200, "criterion": "iou","batch_size": 64,"model_name": "cat_unet","learning_rate": 1e-4,"weight_decay": 0.001,"gamma": 1,"alpha": 15,"pretrained": True,"dropout": True, "p_dropout": 0.2, "n_transforms": 4},
+    # Batch size
+    64:{"experiment_name": "62",'num_epochs':200, "criterion": "iou","batch_size": 32,"model_name": "cat_unet","learning_rate": 1e-4,"weight_decay": 0.001,"gamma": 1,"alpha": 15,"pretrained": False,"dropout": False, "p_dropout": 0.1, "n_transforms": 4},
+    65:{"experiment_name": "65",'num_epochs':200, "criterion": "iou","batch_size": 128,"model_name": "cat_unet","learning_rate": 1e-4,"weight_decay": 0.001,"gamma": 1,"alpha": 15,"pretrained": False,"dropout": False, "p_dropout": 0.1, "n_transforms": 4},
+    66:{"experiment_name": "66",'num_epochs':200, "criterion": "iou","batch_size": 180,"model_name": "cat_unet","learning_rate": 1e-4,"weight_decay": 0.001,"gamma": 1,"alpha": 15,"pretrained": False,"dropout": False, "p_dropout": 0.1, "n_transforms": 4},
+    
+}
+
 # Tester les bests avec 4 transforms 
 
     # 47:{"experiment_name": "47",'num_epochs':200, "criterion": "iou","batch_size": 32,"model_name": "unet","learning_rate": 1e-4,"weight_decay": 0.001,"gamma": 1,"alpha": 15,"pretrained": True,"dropout": False, "p_dropout": None, "n_transforms": 4},
