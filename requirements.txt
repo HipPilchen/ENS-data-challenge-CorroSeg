@@ -1,0 +1,7 @@
+torch
+torchvision
+pandas
+wandb
+scikit-image
+scikit-learn
+tqdm
