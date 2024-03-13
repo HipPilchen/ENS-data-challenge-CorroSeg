@@ -21,7 +21,7 @@ class SoftIoULoss(nn.Module):
         IoU = (intersection + self.smooth) / (union + self.smooth)
 
         # Return the IoU loss
-        return - IoU  # Subtracting from 1 to make it a loss (lower is better)
+        return 1 - IoU  # Subtracting from 1 to make it a loss (lower is better)
     
 
     

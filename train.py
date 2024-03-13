@@ -271,10 +271,12 @@ if __name__ == "__main__":
     args = parser.parse_args()  
     main(args)
     
-# python3 train.py --wandb --wandb_entity lucasgascon --batch-size 128 --num-epochs 100 --model-name seg_model --experiment_name seg_model --criterion iou
+# python3 train.py --wandb --wandb_entity lucasgascon --batch-size 64 --num-epochs 200 --model-name unet --criterion iou -lr 1e-4 --weight-decay 1e-3 --n_transforms 3 --experiment_name unet_iou_not_pretrained_best_params
 
-# python3 train.py --wandb --wandb_entity lucasgascon --batch-size 128 --num-epochs 100 --model-name unet --criterion iou --pretrained --defreezing-strategy --unfreeze-at-epoch 10 -lr 10e-4 --weight-decay 10e-3 --n_transforms 3 --experiment_name unet_pretrained_unfreezed_strategy_iou_best_params
+# python3 train.py --wandb --wandb_entity lucasgascon --batch-size 64 --num-epochs 200 --model-name unet --criterion iou -lr 1e-4 --weight-decay 1e-3 --n_transforms 3 --pretrained --experiment_name unet_iou_pretrained_best_params
 
-# python3 train.py --wandb --wandb_entity lucasgascon --batch-size 128 --num-epochs 100 -lr 10e-4 --weight-decay 10e-3 --n_transforms 3 --model-name unet --criterion iou --experiment_name unet_iou_best_params
+# python3 train.py --wandb --wandb_entity lucasgascon --batch-size 64 --num-epochs 200 --model-name unet --criterion iou -lr 1e-4 --weight-decay 1e-3 --n_transforms 3 --pretrained --defreezing-strategy --unfreeze-at-epoch 10 --experiment_name unet_iou_pretrained_unfreezed_strategy_10_best_params
 
-# python3 train.py --wandb --wandb_entity lucasgascon --batch-size 128 --num-epochs 100 -lr 10e-4 --weight-decay 10e-3 --n_transforms 3 --model-name unet --criterion iou --experiment_name unet_iou_best_params
+# python3 train.py --wandb --wandb_entity lucasgascon --batch-size 64 --num-epochs 200 --model-name unet --criterion iou -lr 1e-4 --weight-decay 1e-3 --n_transforms 3 --pretrained --defreezing-strategy --unfreeze-at-epoch 5 --experiment_name unet_iou_pretrained_unfreezed_strategy_5_best_params
+
+# python3 train.py --wandb --wandb_entity lucasgascon --batch-size 64 --num-epochs 200 --model-name unet --criterion iou -lr 1e-4 --weight-decay 1e-3 --n_transforms 3 --pretrained --defreezing-strategy --unfreeze-at-epoch 20 --experiment_name unet_iou_pretrained_unfreezed_strategy_20_best_params

@@ -130,14 +130,14 @@ class baseline_CNN(nn.Module):
         x = torch.relu(self.fc1(x))
         x = torch.sigmoid(self.fc2(x)).view(-1,1,36,36)  # Sigmoid pour la classification binaire
         return x
-
-
-                
+               
 class UNet(nn.Module):
     def __init__(self, pretrained=True, dropout = False, pdrop = None):
         super(UNet, self).__init__()
-        # Load a pretrained ResNet and use it as the encoder
-        self.base_model = models.resnet50(pretrained=pretrained)
+        if pretrained: # Load a pretrained ResNet and use it as the encoder
+            self.base_model = models.resnet50(weights=ResNet50_Weights.DEFAULT)
+        else: # Use a randomly initialized model
+            self.base_model = models.resnet50(pretrained=False)
         self.base_layers = list(self.base_model.children())
 
         self.encoder1 = nn.Sequential(*self.base_layers[:3])  # Initial conv + bn + relu + maxpool
@@ -166,10 +166,10 @@ class UNet(nn.Module):
     def conv_block(self, in_channels, out_channels):
         block = nn.Sequential(
             nn.Conv2d(in_channels, out_channels, kernel_size=3, padding=1),
-            nn.BatchNorm2d(out_channels),
+            # nn.BatchNorm2d(out_channels),
             nn.ReLU(inplace=True),
             nn.Conv2d(out_channels, out_channels, kernel_size=3, padding=1),
-            nn.BatchNorm2d(out_channels),
+            # nn.BatchNorm2d(out_channels),
             nn.ReLU(inplace=True),
             nn.ConvTranspose2d(out_channels, out_channels, kernel_size=2, stride=2, padding=0, output_padding=0)  # Adjusted
         )
@@ -314,7 +314,7 @@ class SegModel2(nn.Module):
         
         
 class Jacard_UNet(nn.Module):
-    def __init__(self, pretrained=True):
+    def __init__(self):
         super(Jacard_UNet, self).__init__()
 
         self.in_channels = 3
@@ -385,8 +385,10 @@ class Jacard_UNet(nn.Module):
 class Cat_UNet(nn.Module):
     def __init__(self, pretrained=True, dropout = False, pdrop = None):
         super(Cat_UNet, self).__init__()
-        # Load a pretrained ResNet and use it as the encoder
-        self.base_model = models.resnet50(pretrained=pretrained)
+        if pretrained: # Load a pretrained ResNet and use it as the encoder
+            self.base_model = models.resnet50(weights=ResNet50_Weights.DEFAULT)
+        else: # Use a randomly initialized model
+            self.base_model = models.resnet50(pretrained=False)
         self.base_layers = list(self.base_model.children())
 
 
