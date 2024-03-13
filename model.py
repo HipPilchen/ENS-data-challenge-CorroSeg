@@ -171,6 +171,8 @@ class UNet(nn.Module):
             nn.Conv2d(out_channels, out_channels, kernel_size=3, padding=1),
             # nn.BatchNorm2d(out_channels),
             nn.ReLU(inplace=True),
+            nn.Conv2d(out_channels, out_channels, kernel_size=3, padding=1),
+            nn.ReLU(inplace=True),
             nn.ConvTranspose2d(out_channels, out_channels, kernel_size=2, stride=2, padding=0, output_padding=0)  # Adjusted
         )
         return block
@@ -383,7 +385,7 @@ class Jacard_UNet(nn.Module):
 
 
 class Cat_UNet(nn.Module):
-    def __init__(self, pretrained=True, dropout = False, pdrop = None):
+    def __init__(self, pretrained=True, dropout = False, pdrop = None, batchnorm = True):
         super(Cat_UNet, self).__init__()
         if pretrained: # Load a pretrained ResNet and use it as the encoder
             self.base_model = models.resnet50(weights=ResNet50_Weights.DEFAULT)
@@ -400,17 +402,17 @@ class Cat_UNet(nn.Module):
 
         # Decoder layers
         self.upconv4 =  nn.ConvTranspose2d(2048, 1024, kernel_size=2, stride=2, padding=0, output_padding=0)  
-        self.decoder4 = self.conv_block_short(2048, 1024)
+        self.decoder4 = self.conv_block_short(2048, 1024,batchnorm=batchnorm)
         
         self.upconv3 =  nn.ConvTranspose2d(1024, 512, kernel_size=2, stride=2, padding=0, output_padding=0) 
-        self.decoder3 = self.conv_block_short(1024, 512)
+        self.decoder3 = self.conv_block_short(1024, 512, batchnorm=batchnorm)
         
         self.upconv2 =  nn.ConvTranspose2d(512, 256, kernel_size=2, stride=2, padding=0, output_padding=0) 
-        self.decoder2 = self.conv_block_short(512, 256)
+        self.decoder2 = self.conv_block_short(512, 256, batchnorm=batchnorm)
         
         
         self.upconv1 =  nn.ConvTranspose2d(256, 64, kernel_size=2, stride=2, padding=0, output_padding=0) 
-        self.decoder1 = self.conv_block_short(128, 64)
+        self.decoder1 = self.conv_block_short(128, 64, batchnorm=batchnorm)
 
         # Final classifier
         self.final_conv = nn.Conv2d(64, 1, kernel_size=1)
@@ -423,15 +425,23 @@ class Cat_UNet(nn.Module):
             self.dropout_2 = nn.Dropout2d(p = pdrop + 0.1)
 
 
-    def conv_block_short(self, in_channels, out_channels):
-        block = nn.Sequential(
-            nn.Conv2d(in_channels, out_channels, kernel_size=3, padding=1),
-            nn.BatchNorm2d(out_channels),
-            nn.ReLU(inplace=True),
-            nn.Conv2d(out_channels, out_channels, kernel_size=3, padding=1),
-            nn.BatchNorm2d(out_channels),
-            nn.ReLU(inplace=True),
-        )
+    def conv_block_short(self, in_channels, out_channels, batchnorm = True):
+        if batchnorm:
+            block = nn.Sequential(
+                nn.Conv2d(in_channels, out_channels, kernel_size=3, padding=1),
+                nn.BatchNorm2d(out_channels),
+                nn.ReLU(inplace=True),
+                nn.Conv2d(out_channels, out_channels, kernel_size=3, padding=1),
+                nn.BatchNorm2d(out_channels),
+                nn.ReLU(inplace=True),
+            )
+        else:
+            block = nn.Sequential(
+                nn.Conv2d(in_channels, out_channels, kernel_size=3, padding=1),
+                nn.ReLU(inplace=True),
+                nn.Conv2d(out_channels, out_channels, kernel_size=3, padding=1),
+                nn.ReLU(inplace=True),
+            )
         return block
 
     def forward(self, x):
@@ -510,7 +520,7 @@ class ConvBlock(nn.Module):
         x = self.bn(x)
         return self.relu(x)
 
-def get_model(model_name, backbone_name, fpn=False, backbone_pretrained=True, dropout = False, pdrop = None):
+def get_model(model_name, backbone_name, fpn=False, backbone_pretrained=True, dropout = False, pdrop = None, batchnorm = True):
     if model_name == 'first_model':
         model = BinarySegmentationModel(fpn=fpn, backbone_name=backbone_name, backbone_pretrained=backbone_pretrained)
     elif model_name == 'unet':
@@ -524,5 +534,5 @@ def get_model(model_name, backbone_name, fpn=False, backbone_pretrained=True, dr
     elif model_name == 'seg_model':
         model = SegModel()
     elif model_name == 'cat_unet':
-        model = Cat_UNet()
+        model = Cat_UNet(dropout = dropout, pdrop = pdrop, batchnorm = batchnorm, pretrained = backbone_pretrained)
     return model

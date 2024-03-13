@@ -52,7 +52,8 @@ def main(args):
         
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     model = get_model(model_name=args.model_name, backbone_name=args.backbone, 
-                      backbone_pretrained=args.pretrained, dropout = args.dropout, pdrop = args.p_dropout).to(device)
+                      backbone_pretrained=args.pretrained, dropout = args.dropout, 
+                      pdrop = args.p_dropout, batchnorm = args.batchnorm).to(device)
     
 
     # Possible transforms: transforms.RandomHorizontalFlip(), transforms.RandomVerticalFlip(), t
@@ -241,7 +242,7 @@ def parser_args(parser):
                             help="number of epochs to run")
         parser.add_argument('--criterion', default='bce', type=str)
         parser.add_argument('-bs','--batch-size', default=64, type=int)
-        parser.add_argument('--valid-ratio', default=0.1, type=int)
+        parser.add_argument('--valid-ratio', default=0.1, type=float)
         parser.add_argument('--model-name', default='cnn', type=str)
         parser.add_argument('--backbone', default='efficientnet-v2-m', type=str)
         parser.add_argument('-lr', '--learning-rate', default=2e-5, type=float,
@@ -262,6 +263,7 @@ def parser_args(parser):
         parser.add_argument('--random_walk',action="store_true", help="Whether to use a random walk or not")
         parser.add_argument('--early_stopping', default=20, type=int, help="Number of epochs to wait before early stopping")
         parser.add_argument('--n_transforms', default=5, type=int, help="Number of transforms to use")
+        parser.add_argument('--batchnorm', action="store_true", help="Whether to use batchnorm or not")
         return parser
 
 if __name__ == "__main__":

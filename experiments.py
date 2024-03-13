@@ -60,19 +60,19 @@ dict_exp=   {
 
 new_experiments = {
     # Focal for small alphas
-    # 39:{"experiment_name": "39",'num_epochs':200, "criterion": "focal","batch_size": 160,"model_name": "unet","learning_rate": 5e-5,"weight_decay": 0.01,"gamma": 1,"alpha": 1,"pretrained": False,"dropout": False, "p_dropout": None},
-    # 40:{"experiment_name": "40",'num_epochs':200, "criterion": "focal","batch_size": 160,"model_name": "unet","learning_rate": 5e-5,"weight_decay": 0.01,"gamma": 1,"alpha": 0.1,"pretrained": False,"dropout": False, "p_dropout": None},
-    # 41:{"experiment_name": "41",'num_epochs':200, "criterion": "focal","batch_size": 160,"model_name": "unet","learning_rate": 5e-5,"weight_decay": 0.01,"gamma": 1,"alpha": 0.01,"pretrained": False,"dropout": False, "p_dropout": None},
-    # # IoU test on batchsize for optimal learning rate, with 3 transforms not pretrained no dropout
-    # 42:{"experiment_name": "42",'num_epochs':200, "criterion": "iou","batch_size": 32,"model_name": "unet","learning_rate": 1e-4,"weight_decay": 0.01,"gamma": 1,"alpha": 15,"pretrained": False,"dropout": False, "p_dropout": None, "n_transforms": 3},
-    # 43:{"experiment_name": "43",'num_epochs':200, "criterion": "iou","batch_size": 64,"model_name": "unet","learning_rate": 1e-4,"weight_decay": 0.01,"gamma": 1,"alpha": 15,"pretrained": False,"dropout": False, "p_dropout": None, "n_transforms": 3},
-    # 44:{"experiment_name": "44",'num_epochs':200, "criterion": "iou","batch_size": 128,"model_name": "unet","learning_rate": 1e-4,"weight_decay": 0.01,"gamma": 1,"alpha": 15,"pretrained": False,"dropout": False, "p_dropout": None, "n_transforms": 3},
-    # 45:{"experiment_name": "45",'num_epochs':200, "criterion": "iou","batch_size": 180,"model_name": "unet","learning_rate": 1e-4,"weight_decay": 0.01,"gamma": 1,"alpha": 15,"pretrained": False,"dropout": False, "p_dropout": None, "n_transforms": 3},
-    # 46:{"experiment_name": "46",'num_epochs':200, "criterion": "iou","batch_size": 200,"model_name": "unet","learning_rate": 1e-4,"weight_decay": 0.01,"gamma": 1,"alpha": 15,"pretrained": False,"dropout": False, "p_dropout": None, "n_transforms": 3},
-    # # IoU test with pretrained and optimal weight decay
-    # 47:{"experiment_name": "47",'num_epochs':200, "criterion": "iou","batch_size": 32,"model_name": "unet","learning_rate": 1e-4,"weight_decay": 0.001,"gamma": 1,"alpha": 15,"pretrained": True,"dropout": False, "p_dropout": None, "n_transforms": 3},
-    # 48:{"experiment_name": "48",'num_epochs':200, "criterion": "iou","batch_size": 64,"model_name": "unet","learning_rate": 1e-4,"weight_decay": 0.001,"gamma": 1,"alpha": 15,"pretrained": True,"dropout": False, "p_dropout": None, "n_transforms": 3},
-    # 49:{"experiment_name": "49",'num_epochs':200, "criterion": "iou","batch_size": 128,"model_name": "unet","learning_rate": 1e-4,"weight_decay": 0.001,"gamma": 1,"alpha": 15,"pretrained": True,"dropout": False, "p_dropout": None, "n_transforms": 3},
+    39:{"experiment_name": "39",'num_epochs':200, "criterion": "focal","batch_size": 160,"model_name": "unet","learning_rate": 5e-5,"weight_decay": 0.01,"gamma": 1,"alpha": 1,"pretrained": False,"dropout": False, "p_dropout": None},
+    40:{"experiment_name": "40",'num_epochs':200, "criterion": "focal","batch_size": 160,"model_name": "unet","learning_rate": 5e-5,"weight_decay": 0.01,"gamma": 1,"alpha": 0.1,"pretrained": False,"dropout": False, "p_dropout": None},
+    41:{"experiment_name": "41",'num_epochs':200, "criterion": "focal","batch_size": 160,"model_name": "unet","learning_rate": 5e-5,"weight_decay": 0.01,"gamma": 1,"alpha": 0.01,"pretrained": False,"dropout": False, "p_dropout": None},
+    # IoU test on batchsize for optimal learning rate, with 3 transforms not pretrained no dropout
+    42:{"experiment_name": "42",'num_epochs':200, "criterion": "iou","batch_size": 32,"model_name": "unet","learning_rate": 1e-4,"weight_decay": 0.01,"gamma": 1,"alpha": 15,"pretrained": False,"dropout": False, "p_dropout": None, "n_transforms": 3},
+    43:{"experiment_name": "43",'num_epochs':200, "criterion": "iou","batch_size": 64,"model_name": "unet","learning_rate": 1e-4,"weight_decay": 0.01,"gamma": 1,"alpha": 15,"pretrained": False,"dropout": False, "p_dropout": None, "n_transforms": 3},
+    44:{"experiment_name": "44",'num_epochs':200, "criterion": "iou","batch_size": 128,"model_name": "unet","learning_rate": 1e-4,"weight_decay": 0.01,"gamma": 1,"alpha": 15,"pretrained": False,"dropout": False, "p_dropout": None, "n_transforms": 3},
+    45:{"experiment_name": "45",'num_epochs':200, "criterion": "iou","batch_size": 180,"model_name": "unet","learning_rate": 1e-4,"weight_decay": 0.01,"gamma": 1,"alpha": 15,"pretrained": False,"dropout": False, "p_dropout": None, "n_transforms": 3},
+    46:{"experiment_name": "46",'num_epochs':200, "criterion": "iou","batch_size": 200,"model_name": "unet","learning_rate": 1e-4,"weight_decay": 0.01,"gamma": 1,"alpha": 15,"pretrained": False,"dropout": False, "p_dropout": None, "n_transforms": 3},
+    # IoU test with pretrained and optimal weight decay
+    47:{"experiment_name": "47",'num_epochs':200, "criterion": "iou","batch_size": 32,"model_name": "unet","learning_rate": 1e-4,"weight_decay": 0.001,"gamma": 1,"alpha": 15,"pretrained": True,"dropout": False, "p_dropout": None, "n_transforms": 3},
+    48:{"experiment_name": "48",'num_epochs':200, "criterion": "iou","batch_size": 64,"model_name": "unet","learning_rate": 1e-4,"weight_decay": 0.001,"gamma": 1,"alpha": 15,"pretrained": True,"dropout": False, "p_dropout": None, "n_transforms": 3},
+    49:{"experiment_name": "49",'num_epochs':200, "criterion": "iou","batch_size": 128,"model_name": "unet","learning_rate": 1e-4,"weight_decay": 0.001,"gamma": 1,"alpha": 15,"pretrained": True,"dropout": False, "p_dropout": None, "n_transforms": 3},
     50:{"experiment_name": "50",'num_epochs':200, "criterion": "iou","batch_size": 180,"model_name": "unet","learning_rate": 1e-4,"weight_decay": 0.001,"gamma": 1,"alpha": 15,"pretrained": True,"dropout": False, "p_dropout": None, "n_transforms": 3},
     51:{"experiment_name": "51",'num_epochs':200, "criterion": "iou","batch_size": 200,"model_name": "unet","learning_rate": 1e-4,"weight_decay": 0.001,"gamma": 1,"alpha": 15,"pretrained": True,"dropout": False, "p_dropout": None, "n_transforms": 3},
     # IoU test with pretrained on balance weight decay, dropout for 4 transforms
@@ -83,36 +83,72 @@ new_experiments = {
     55:{"experiment_name": "55",'num_epochs':200, "criterion": "iou","batch_size": 64,"model_name": "baseline_cnn","learning_rate": 1e-4,"weight_decay": 0.001,"gamma": 1,"alpha": 15,"pretrained": False,"dropout": True, "p_dropout": 0.1, "n_transforms": 4},
     56:{"experiment_name": "56",'num_epochs':200, "criterion": "iou","batch_size": 64,"model_name": "seg_model","learning_rate": 1e-4,"weight_decay": 0.001,"gamma": 1,"alpha": 15,"pretrained": False,"dropout": True, "p_dropout": 0.1, "n_transforms": 4},
     57:{'experiment_name': '57', 'num_epochs': 200, 'criterion': 'iou', 'batch_size': 64, 'model_name': 'unet', 'learning_rate': 1e-4, 'weight_decay': 0.001, 'gamma': 1, 'alpha': 15, 'pretrained': False, 'dropout': True, 'p_dropout': 0.1, 'n_transforms': 4},
+    # Cuda out of memory
     58:{'experiment_name': '58', 'num_epochs': 200, 'criterion': 'iou', 'batch_size': 64, 'model_name': 'cnn', 'learning_rate': 1e-4, 'weight_decay': 0.001, 'gamma': 1, 'alpha': 15, 'pretrained': False, 'dropout': True, 'p_dropout': 0.1, 'n_transforms': 4},
-    59:{'experiment_name': '59', 'num_epochs': 200, 'criterion': 'iou', 'batch_size': 64, 'model_name': 'first_model', 'learning_rate': 1e-4, 'weight_decay': 0.001, 'gamma': 1, 'alpha': 15, 'pretrained': False, 'dropout': True, 'p_dropout': 0.1, 'n_transforms': 4},
+    59:{'experiment_name': '59', 'num_epo chs': 200, 'criterion': 'iou', 'batch_size': 64, 'model_name': 'first_model', 'learning_rate': 1e-4, 'weight_decay': 0.001, 'gamma': 1, 'alpha': 15, 'pretrained': False, 'dropout': True, 'p_dropout': 0.1, 'n_transforms': 4},
 }
 
 # Experiments on Unet with batchnorm and different skip connection
-newest_exp = {
-    # Add Unet with Batch Normalization same number as above
-    17:{"experiment_name": "batchnorm_17",'num_epochs':200, "criterion": "iou","batch_size": 160,"model_name": "unet","learning_rate": 1e-5,"weight_decay": 0.01,"gamma": 1,"alpha": 15,"pretrained": False,"dropout": False, "p_dropout": None},
-    18:{"experiment_name": "batchnorm_18",'num_epochs':200, "criterion": "iou","batch_size": 160,"model_name": "unet","learning_rate": 5e-5,"weight_decay": 0.01,"gamma": 1,"alpha": 15,"pretrained": False,"dropout": False, "p_dropout": None},
-    19:{"experiment_name": "batchnorm_19",'num_epochs':200, "criterion": "iou","batch_size": 160,"model_name": "unet","learning_rate": 1e-4,"weight_decay": 0.01,"gamma": 1,"alpha": 15,"pretrained": False,"dropout": False, "p_dropout": None},
-    20:{"experiment_name": "batchnorm_20",'num_epochs':200, "criterion": "iou","batch_size": 160,"model_name": "unet","learning_rate": 5e-4,"weight_decay": 0.01,"gamma": 1,"alpha": 15,"pretrained": False,"dropout": False, "p_dropout": None},
-    47:{"experiment_name": "batchnorm_47",'num_epochs':200, "criterion": "iou","batch_size": 32,"model_name": "unet","learning_rate": 1e-4,"weight_decay": 0.001,"gamma": 1,"alpha": 15,"pretrained": True,"dropout": False, "p_dropout": None, "n_transforms": 4},
-    48:{"experiment_name": "batchnorm_48",'num_epochs':200, "criterion": "iou","batch_size": 64,"model_name": "unet","learning_rate": 1e-4,"weight_decay": 0.001,"gamma": 1,"alpha": 15,"pretrained": True,"dropout": False, "p_dropout": None, "n_transforms": 4},
-    49:{"experiment_name": "batchnorm_49",'num_epochs':200, "criterion": "iou","batch_size": 128,"model_name": "unet","learning_rate": 1e-4,"weight_decay": 0.001,"gamma": 1,"alpha": 15,"pretrained": True,"dropout": False, "p_dropout": None, "n_transforms": 4},
+# Add to REPORT
+newest_exp_0 = {
+    # Add Unet with Batch Normalization same number as above # moins bien en valid mais pareil en train
+    # 17:{"experiment_name": "batchnorm_17",'num_epochs':200, "criterion": "iou","batch_size": 160,"model_name": "unet","learning_rate": 1e-5,"weight_decay": 0.01,"gamma": 1,"alpha": 15,"pretrained": False,"dropout": False, "p_dropout": None},
+    # 18:{"experiment_name": "batchnorm_18",'num_epochs':200, "criterion": "iou","batch_size": 160,"model_name": "unet","learning_rate": 5e-5,"weight_decay": 0.01,"gamma": 1,"alpha": 15,"pretrained": False,"dropout": False, "p_dropout": None},
+    # 19:{"experiment_name": "batchnorm_19",'num_epochs':200, "criterion": "iou","batch_size": 160,"model_name": "unet","learning_rate": 1e-4,"weight_decay": 0.01,"gamma": 1,"alpha": 15,"pretrained": False,"dropout": False, "p_dropout": None},
+    # 20:{"experiment_name": "batchnorm_20",'num_epochs':200, "criterion": "iou","batch_size": 160,"model_name": "unet","learning_rate": 5e-4,"weight_decay": 0.01,"gamma": 1,"alpha": 15,"pretrained": False,"dropout": False, "p_dropout": None},
+    # Pas de différence significative quand pretrained 
+    # 47:{"experiment_name": "batchnorm_47",'num_epochs':200, "criterion": "iou","batch_size": 32,"model_name": "unet","learning_rate": 1e-4,"weight_decay": 0.001,"gamma": 1,"alpha": 15,"pretrained": True,"dropout": False, "p_dropout": None, "n_transforms": 3},
+    # 48:{"experiment_name": "batchnorm_48",'num_epochs':200, "criterion": "iou","batch_size": 64,"model_name": "unet","learning_rate": 1e-4,"weight_decay": 0.001,"gamma": 1,"alpha": 15,"pretrained": True,"dropout": False, "p_dropout": None, "n_transforms": 3},
+    # 49:{"experiment_name": "batchnorm_49",'num_epochs':200, "criterion": "iou","batch_size": 128,"model_name": "unet","learning_rate": 1e-4,"weight_decay": 0.001,"gamma": 1,"alpha": 15,"pretrained": True,"dropout": False, "p_dropout": None, "n_transforms": 3},
+    # Aucune diff pour les 2
+    42 :{"experiment_name": "batchnorm_42",'num_epochs':200, "criterion": "iou","batch_size": 32,"model_name": "unet","learning_rate": 1e-4,"weight_decay": 0.01,"gamma": 1,"alpha": 15,"pretrained": False,"dropout": False, "p_dropout": None, "n_transforms": 3},
+    43 :{"experiment_name": "batchnorm_43",'num_epochs':200, "criterion": "iou","batch_size": 64,"model_name": "unet","learning_rate": 1e-4,"weight_decay": 0.01,"gamma": 1,"alpha": 15,"pretrained": False,"dropout": False, "p_dropout": None, "n_transforms": 3},
+    44 :{"experiment_name": "batchnorm_44",'num_epochs':200, "criterion": "iou","batch_size": 128,"model_name": "unet","learning_rate": 1e-4,"weight_decay": 0.01,"gamma": 1,"alpha": 15,"pretrained": False,"dropout": False, "p_dropout": None, "n_transforms": 3},
     # New experiments with concat skip connections
-    # Classis
-    60:{"experiment_name": "60",'num_epochs':200, "criterion": "iou","batch_size": 64,"model_name": "cat_unet","learning_rate": 1e-4,"weight_decay": 0.001,"gamma": 1,"alpha": 15,"pretrained": False,"dropout": False, "p_dropout": 0.1, "n_transforms": 4},
-    61:{"experiment_name": "61",'num_epochs':200, "criterion": "iou","batch_size": 64,"model_name": "cat_unet","learning_rate": 1e-4,"weight_decay": 0.001,"gamma": 1,"alpha": 15,"pretrained": False,"dropout": True, "p_dropout": 0.1, "n_transforms": 4},
-    # pretrained
-    61:{"experiment_name": "61",'num_epochs':200, "criterion": "iou","batch_size": 64,"model_name": "cat_unet","learning_rate": 1e-4,"weight_decay": 0.001,"gamma": 1,"alpha": 15,"pretrained": True,"dropout": False, "p_dropout": 0.1, "n_transforms": 4},
-    62:{"experiment_name": "62",'num_epochs':200, "criterion": "iou","batch_size": 64,"model_name": "cat_unet","learning_rate": 1e-4,"weight_decay": 0.001,"gamma": 1,"alpha": 15,"pretrained": True,"dropout": True, "p_dropout": 0.1, "n_transforms": 4},
-    63:{"experiment_name": "63",'num_epochs':200, "criterion": "iou","batch_size": 64,"model_name": "cat_unet","learning_rate": 1e-4,"weight_decay": 0.001,"gamma": 1,"alpha": 15,"pretrained": True,"dropout": True, "p_dropout": 0.2, "n_transforms": 4},
-    # Batch size
+    # Classis à comparer avec 43, mieux que pas pretrained sur la valid et sur 
+    60:{"experiment_name": "60",'num_epochs':200, "criterion": "iou","batch_size": 64,"model_name": "cat_unet","learning_rate": 1e-4,"weight_decay": 0.001,"gamma": 1,"alpha": 15,"pretrained": False,"dropout": False, "p_dropout": 0.1, "n_transforms": 3},
+    # To do again
+    61:{"experiment_name": "61",'num_epochs':200, "criterion": "iou","batch_size": 64,"model_name": "cat_unet","learning_rate": 1e-4,"weight_decay": 0.001,"gamma": 1,"alpha": 15,"pretrained": False,"dropout": True, "p_dropout": 0.1, "n_transforms": 3},
+    # pretrained # Mieux aussi 
+    61:{"experiment_name": "61",'num_epochs':200, "criterion": "iou","batch_size": 64,"model_name": "cat_unet","learning_rate": 1e-4,"weight_decay": 0.001,"gamma": 1,"alpha": 15,"pretrained": True,"dropout": False, "p_dropout": 0.1, "n_transforms": 3},
+    62:{"experiment_name": "62",'num_epochs':200, "criterion": "iou","batch_size": 64,"model_name": "cat_unet","learning_rate": 1e-4,"weight_decay": 0.001,"gamma": 1,"alpha": 15,"pretrained": True,"dropout": True, "p_dropout": 0.1, "n_transforms": 3},
+    63:{"experiment_name": "63",'num_epochs':200, "criterion": "iou","batch_size": 64,"model_name": "cat_unet","learning_rate": 1e-4,"weight_decay": 0.001,"gamma": 1,"alpha": 15,"pretrained": True,"dropout": True, "p_dropout": 0.2, "n_transforms": 3},
+    # Batch size # Impact the speed of convergence but not the final result for both scores. 
     64:{"experiment_name": "62",'num_epochs':200, "criterion": "iou","batch_size": 32,"model_name": "cat_unet","learning_rate": 1e-4,"weight_decay": 0.001,"gamma": 1,"alpha": 15,"pretrained": False,"dropout": False, "p_dropout": 0.1, "n_transforms": 4},
     65:{"experiment_name": "65",'num_epochs':200, "criterion": "iou","batch_size": 128,"model_name": "cat_unet","learning_rate": 1e-4,"weight_decay": 0.001,"gamma": 1,"alpha": 15,"pretrained": False,"dropout": False, "p_dropout": 0.1, "n_transforms": 4},
     66:{"experiment_name": "66",'num_epochs':200, "criterion": "iou","batch_size": 180,"model_name": "cat_unet","learning_rate": 1e-4,"weight_decay": 0.001,"gamma": 1,"alpha": 15,"pretrained": False,"dropout": False, "p_dropout": 0.1, "n_transforms": 4},
     
 }
 
+
+newest_exp = {
+    # Num of transforms with concat, not pretrained (mieux dans le cas concat)
+    67:{"experiment_name": "67",'num_epochs':200, "criterion": "iou","batch_size": 64,"model_name": "cat_unet","learning_rate": 1e-4,"weight_decay": 0.001,"gamma": 1,"alpha": 15,"pretrained": False,"dropout": False, "p_dropout": 0.1, "n_transforms": 3},
+    68:{"experiment_name": "68",'num_epochs':200, "criterion": "iou","batch_size": 64,"model_name": "cat_unet","learning_rate": 1e-4,"weight_decay": 0.001,"gamma": 1,"alpha": 15,"pretrained": False,"dropout": False, "p_dropout": 0.1, "n_transforms": 4},
+    69:{"experiment_name": "69",'num_epochs':200, "criterion": "iou","batch_size": 64,"model_name": "cat_unet","learning_rate": 1e-4,"weight_decay": 0.001,"gamma": 1,"alpha": 15,"pretrained": False,"dropout": False, "p_dropout": 0.1, "n_transforms": 5},
+    # Num of transforms with concat, pretrained
+    # 70:{"experiment_name": "70",'num_epochs':200, "criterion": "iou","batch_size": 64,"model_name": "cat_unet","learning_rate": 1e-4,"weight_decay": 0.001,"gamma": 1,"alpha": 15,"pretrained": True,"dropout": False, "p_dropout": 0.1, "n_transforms": 3},
+    # 71:{"experiment_name": "71",'num_epochs':200, "criterion": "iou","batch_size": 64,"model_name": "cat_unet","learning_rate": 1e-4,"weight_decay": 0.001,"gamma": 1,"alpha": 15,"pretrained": True,"dropout": False, "p_dropout": 0.1, "n_transforms": 4},
+    # 72:{"experiment_name": "72",'num_epochs':200, "criterion": "iou","batch_size": 64,"model_name": "cat_unet","learning_rate": 1e-4,"weight_decay": 0.001,"gamma": 1,"alpha": 15,"pretrained": True,"dropout": False, "p_dropout": 0.1, "n_transforms": 5},
+    #  Concat, pretrained, dropout # Trop dropout nuit à la valid
+    # 73:{"experiment_name": "73",'num_epochs':200, "criterion": "iou","batch_size": 64,"model_name": "cat_unet","learning_rate": 1e-4,"weight_decay": 0.001,"gamma": 1,"alpha": 15,"pretrained": True,"dropout": True, "p_dropout": 0.1, "n_transforms": 4},
+    # 74:{"experiment_name": "74",'num_epochs':200, "criterion": "iou","batch_size": 64,"model_name": "cat_unet","learning_rate": 1e-4,"weight_decay": 0.001,"gamma": 1,"alpha": 15,"pretrained": True,"dropout": True, "p_dropout": 0.2, "n_transforms": 4},
+    # Concat without batchnorm  # Moins bien qu'avec batchnorm
+    75:{"experiment_name": "75",'num_epochs':200, "criterion": "iou","batch_size": 64,"model_name": "cat_unet","learning_rate": 1e-4,"weight_decay": 0.001,"gamma": 1,"alpha": 15,"pretrained": False,"dropout": False, "p_dropout": 0.1, "n_transforms": 4, "batchnorm": False},
+    # 76:{"experiment_name": "76",'num_epochs':200, "criterion": "iou","batch_size": 64,"model_name": "cat_unet","learning_rate": 1e-4,"weight_decay": 0.001,"gamma": 1,"alpha": 15,"pretrained": True,"dropout": False, "p_dropout": 0.1, "n_transforms": 4, "batchnorm": False},
+    # Concat, not pretrained, dropout
+    77:{"experiment_name": "77",'num_epochs':200, "criterion": "iou","batch_size": 64,"model_name": "cat_unet","learning_rate": 1e-4,"weight_decay": 0.001,"gamma": 1,"alpha": 15,"pretrained": False,"dropout": True, "p_dropout": 0.1, "n_transforms": 4},
+    78:{"experiment_name": "78",'num_epochs':200, "criterion": "iou","batch_size": 64,"model_name": "cat_unet","learning_rate": 1e-4,"weight_decay": 0.001,"gamma": 1,"alpha": 15,"pretrained": False,"dropout": True, "p_dropout": 0.2, "n_transforms": 4},
+    
+}
 # Tester les bests avec 4 transforms 
-
-    # 47:{"experiment_name": "47",'num_epochs':200, "criterion": "iou","batch_size": 32,"model_name": "unet","learning_rate": 1e-4,"weight_decay": 0.001,"gamma": 1,"alpha": 15,"pretrained": True,"dropout": False, "p_dropout": None, "n_transforms": 4},
-
+to_submit = {
+    73:{"experiment_name": "to_submit_drop_npre",'num_epochs':200, "criterion": "iou","batch_size": 64,"model_name": "cat_unet","learning_rate": 1e-4,"weight_decay": 0.001,"gamma": 1,"alpha": 15,"pretrained": False,"dropout": True, "p_dropout": 0.1, "n_transforms": 4,'valid_ratio':0.01},
+    74:{'experiment_name': 'to_submit_no_drop_npre', 'num_epochs': 200, 'criterion': 'iou', 'batch_size': 64, 'model_name': 'cat_unet', 'learning_rate': 1e-4, 'weight_decay': 0.001, 'gamma': 1, 'alpha': 15, 'pretrained': False, 'dropout': False, 'p_dropout': 0.1, 'n_transforms': 4,'valid_ratio':0.01},
+    75:{"experiment_name": "to_submit_no_drop_less_transfo_npre",'num_epochs':200, "criterion": "iou","batch_size": 64,"model_name": "cat_unet","learning_rate": 1e-4,"weight_decay": 0.001,"gamma": 1,"alpha": 15,"pretrained": False,"dropout": False, "p_dropout": 0.1, "n_transforms": 3,'valid_ratio':0.01},
+    76:{"experiment_name": "to_submit_drop_less_transfo_npre",'num_epochs':200, "criterion": "iou","batch_size": 64,"model_name": "cat_unet","learning_rate": 1e-4,"weight_decay": 0.001,"gamma": 1,"alpha": 15,"pretrained": False,"dropout": True, "p_dropout": 0.1, "n_transforms": 3,'valid_ratio':0.01},
+    77:{'experiment_name': 'to_submit_best_score1', 'num_epochs': 200, 'criterion': 'iou', 'batch_size': 32, 'model_name': 'cat_unet', 'learning_rate': 5e-5, 'weight_decay': 0.001, 'gamma': 1, 'alpha': 15, 'pretrained': True, 'dropout': False, 'p_dropout': 0.1,'valid_ratio':0.01},
+    78:{'experiment_name': 'to_submit_best_score2', 'num_epochs': 200, 'criterion': 'iou', 'batch_size': 64, 'model_name': 'cat_unet', 'learning_rate': 5e-5, 'weight_decay': 0.001, 'gamma': 1, 'alpha': 15, 'pretrained': True, 'dropout': False, 'p_dropout': 0.1,'valid_ratio':0.01},
+    79:{'experiment_name': 'to_submit_best_score3', 'num_epochs': 200, 'criterion': 'iou', 'batch_size': 128, 'model_name': 'cat_unet', 'learning_rate': 5e-5, 'weight_decay': 0.001, 'gamma': 1, 'alpha': 15, 'pretrained': True, 'dropout': False, 'p_dropout': 0.1,'valid_ratio':0.01},
+    80:{'experiment_name': 'to_submit_best_score4', 'num_epochs': 200, 'criterion': 'iou', 'batch_size': 180, 'model_name': 'cat_unet', 'learning_rate': 5e-5, 'weight_decay': 0.001, 'gamma': 1, 'alpha': 15, 'pretrained': True, 'dropout': False, 'p_dropout': 0.1,'valid_ratio':0.01},
+}

@@ -2,14 +2,14 @@ import argparse
 import numpy as np
 from train import main as train_main
 from train import parser_args as train_parser_args
-from experiments import dict_exp, new_experiments, newest_exp
+from experiments import dict_exp, new_experiments, newest_exp, to_submit
 import json
 
 def create_commands(wandb=True, experiment_name=None, wandb_id=None, wandb_entity=None, num_epochs=None, 
                     criterion=None, batch_size=None, valid_ratio=None, model_name=None, backbone=None, learning_rate=None, 
                     threshold=None, defreezing_strategy=None, unfreeze_at_epoch=None, layers_to_unfreeze_each_time=None, 
                     weight_decay=None, gamma=None, alpha=None, model_need_GRAY=None, pretrained=None, scheduler=None, dropout=None, 
-                    random_walk=None, early_stopping=None, p_dropout = None, n_transforms = None):
+                    random_walk=None, early_stopping=None, p_dropout = None, n_transforms = None, batchnorm = True):
     
     commands = []
     if wandb:
@@ -83,6 +83,8 @@ def create_commands(wandb=True, experiment_name=None, wandb_id=None, wandb_entit
     if n_transforms is not None:
         commands.append('--n_transforms')
         commands.append(str(n_transforms))
+    if batchnorm:
+        commands.append('--batchnorm')
     return commands
     
 def run_exps(dico_exp):
@@ -90,17 +92,18 @@ def run_exps(dico_exp):
         print('Running experiment', num_exp)
         parser = argparse.ArgumentParser()
         parser = train_parser_args(parser) 
-        try:               
-            args = parser.parse_args(create_commands(**params))
-            print('Command:', args)
-            train_main(args)
-        except:
-            print('Error in experiment', num_exp)
-            continue
+        # try:               
+        args = parser.parse_args(create_commands(**params))
+        print('Command:', args)
+        train_main(args)
+        # except:
+        #     print('Error in experiment', num_exp)
+        #     continue
 
     
 if __name__ == "__main__":
     # run_exps(new_experiments)
-    run_exps(newest_exp)
+    # run_exps(newest_exp)
+    run_exps(to_submit)
     print("All experiments run successfully")
     
