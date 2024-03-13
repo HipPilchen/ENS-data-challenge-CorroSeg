@@ -11,7 +11,15 @@ The main objective of this project is to develop a system for segmenting defects
 
 ## Methodology
 
-We have developped a U-Net architecture-like model. After many experiments, the hyperparameters and the training method has been adapted to perform an accurate segmentation of images of corroded wells. Finally, we succeed in obtaining a high IoU score on the test set. 
+We have developped a U-Net architecture-like model. After many experiments, the hyperparameters and the training method has been adapted to perform an accurate segmentation of images of corroded wells. Finally, we succeed in obtaining a high IoU score (0.66, ranked first among the students of our Master) on the test set. 
+
+## Usage
+
+Choose your model and the hyperparameters and then run:
+
+    ```
+    python3 train.py --wandb --wandb_entity yourid_wb --batch-size 64 --num-epochs 200 --model-name cat_unet --criterion iou -lr 1e-4  --pretrained --experiment_name new_exp
+    ```
 ## Collaborators
 
 - Hippolyte Pilchen (MVA, ENS Paris-Saclay)
