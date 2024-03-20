@@ -18,7 +18,7 @@ We have developped a U-Net architecture-like model. After many experiments, the 
 Choose your model and the hyperparameters and then run:
 
     ```
-    python3 train.py --wandb --wandb_entity yourid_wb --batch-size 64 --num-epochs 200 --model-name cat_unet --criterion iou -lr 1e-4  --pretrained --experiment_name new_exp
+    python train.py --wandb --wandb_entity yourid_wb --batch-size 64 --num-epochs 200 --model-name cat_unet --criterion iou -lr 1e-4  --pretrained --experiment_name new_exp
     ```
 ## Collaborators
 
