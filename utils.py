@@ -78,7 +78,7 @@ class RollTransform:
     
 
 # Average the results of several models from submissions placed in a directory
-def average_submissions(dir_path = "data/predictions/averaging", new_name = "averaged_submission.csv"):
+def average_submissions(dir_path = "data/predictions/averaging", new_name = "averaged_submission_notpretrainedonly.csv"):
     n = len(os.listdir(dir_path))
     N = len(os.listdir('data/processed/images_test'))
     pred = np.zeros((n,N,1296))

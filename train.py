@@ -15,6 +15,7 @@ import os
 import datetime
 from datetime import datetime
 from skimage.segmentation import random_walker
+from copy import deepcopy
 
 
 def main(args):
@@ -57,12 +58,14 @@ def main(args):
     model = get_model(model_name=args.model_name, backbone_name=args.backbone,
                       backbone_pretrained=args.pretrained, dropout=args.dropout,
                       pdrop=args.p_dropout, batchnorm=args.batchnorm).to(device)
+    bestmodel = deepcopy(model)
 
     # Possible transforms: transforms.RandomHorizontalFlip(), transforms.RandomVerticalFlip(), t
     all_transforms = [None,
                       transforms.RandomHorizontalFlip(1),
-                      transforms.RandomVerticalFlip(1), RollTransform(),
-                      transforms.Compose([transforms.RandomVerticalFlip(1), transforms.RandomHorizontalFlip(1)]),]
+                      transforms.RandomVerticalFlip(1), 
+                      transforms.Compose([transforms.RandomVerticalFlip(1), transforms.RandomHorizontalFlip(1)]),
+                      RollTransform()]
     transform_img = all_transforms[:args.n_transforms]
 
     corro_seg = CorroSeg('data', 'y_train.csv', shuffle=True,
@@ -157,6 +160,7 @@ def main(args):
         best_val_loss = min(best_val_loss, val_loss)
         if best_val_loss == val_loss:
             count_loss_decrease = 0
+            bestmodel = deepcopy(model)
         else:
             count_loss_decrease += 1
             if count_loss_decrease == args.early_stopping:
@@ -172,7 +176,7 @@ def main(args):
 
     """Create segmentations of test images
     """
-    model.eval()
+    bestmodel.eval()
     predicted_masks = []  # List to store predicted masks
     with torch.no_grad():
         for image, _, _ in test_loader:  # Ignore the masks in the test loader
@@ -180,7 +184,7 @@ def main(args):
                 image = torch.mean(image, dim=1, keepdim=True)
 
             image = image.to(device)
-            output = model(image).detach()
+            output = bestmodel(image).detach()
             if not args.random_walk:
                 preds = output > args.threshold  # Apply threshold to get binary predictions
                 preds = preds.int()
