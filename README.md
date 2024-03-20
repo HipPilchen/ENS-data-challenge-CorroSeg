@@ -1,4 +1,4 @@
-# Projet "Apprentissage et Génération par Échantillonnage de Probabilités"
+# Project "Apprentissage et Génération par Échantillonnage de Probabilités"
 
 
 ## Introduction
